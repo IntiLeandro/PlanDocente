@@ -1,6 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Clave API de Gemini integrada por defecto
-    const DEFAULT_GEMINI_API_KEY = "AIzaSyBLnVNWCJPZKkjkxqcm59G_ZMhM5p7reS4";
+    const apiKeyInput = document.getElementById("apiKey");
+    const apiModal = document.getElementById("apiModal");
+    const btnHelpApi = document.getElementById("btnHelpApi");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    const btnGotIt = document.getElementById("btnGotIt");
+
+    // Guardar y cargar la API Key desde el almacenamiento local del navegador (LocalStorage)
+    const savedApiKey = localStorage.getItem("plandocente_gemini_key") || "";
+    if (apiKeyInput && savedApiKey) {
+        apiKeyInput.value = savedApiKey;
+    }
+
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener("input", (e) => {
+            localStorage.setItem("plandocente_gemini_key", e.target.value.trim());
+        });
+    }
+
+    // Modal behavior
+    if (btnHelpApi) btnHelpApi.addEventListener("click", () => apiModal.classList.add("show"));
+    if (btnCloseModal) btnCloseModal.addEventListener("click", () => apiModal.classList.remove("show"));
+    if (btnGotIt) btnGotIt.addEventListener("click", () => apiModal.classList.remove("show"));
 
     let activeDay = "Lunes";
 
@@ -197,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const val = e.target.value;
                 entry.area = val;
                 entry.is_special = (val === "CLASE ESPECIALISTA");
-                entry.is_neery = (val === "ÑE'ẽRY");
+                entry.is_neery = (val === "ÑE'ẼRY");
                 renderSlots();
             });
 
@@ -277,12 +297,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
+                    const userKey = apiKeyInput ? apiKeyInput.value.trim() : "";
+                    if (!userKey) {
+                        alert("Por favor ingresa tu Clave API de Gemini en la casilla superior para continuar.");
+                        if (apiModal) apiModal.classList.add("show");
+                        return;
+                    }
+
                     const loaderOverlay = document.getElementById("loaderOverlay");
                     document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
                     loaderOverlay.classList.add("show");
 
                     try {
-                        const parsedJson = await callGeminiApiDirect(DEFAULT_GEMINI_API_KEY, entry);
+                        const parsedJson = await callGeminiApiDirect(userKey, entry);
                         entry.unidad = parsedJson.unidad || "";
                         entry.tema = parsedJson.tema || "";
                         entry.capacidad = parsedJson.capacidad || "";
@@ -296,6 +323,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         renderSlots();
                     } catch (err) {
                         alert(err.message);
+                        if (apiModal && (err.message.includes("403") || err.message.includes("clave"))) {
+                            apiModal.classList.add("show");
+                        }
                     } finally {
                         loaderOverlay.classList.remove("show");
                         document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
@@ -320,36 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             reader.onerror = error => reject(error);
         });
-    }
-
-    // Consulta dinámicamente los modelos válidos priorizando siempre gemini-1.5-flash
-    async function fetchValidGeminiModels(apiKey) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) return ["gemini-1.5-flash", "gemini-1.5-pro"];
-            const data = await resp.json();
-            const validModels = [];
-            if (data.models && Array.isArray(data.models)) {
-                for (const m of data.models) {
-                    if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
-                        let name = m.name || "";
-                        if (name.startsWith("models/")) name = name.substring(7);
-                        if (!name.includes("latest")) {
-                            validModels.push(name);
-                        }
-                    }
-                }
-            }
-            // PRIORIZAR gemini-1.5-flash PRIMERO (15 RPM / 1500 RPD Gratuito)
-            const g15Flash = validModels.filter(m => m === "gemini-1.5-flash");
-            const otherFlash = validModels.filter(m => m.includes("flash") && m !== "gemini-1.5-flash");
-            const rest = validModels.filter(m => !m.includes("flash"));
-            const combined = [...g15Flash, ...otherFlash, ...rest];
-            return combined.length > 0 ? combined : ["gemini-1.5-flash", "gemini-1.5-pro"];
-        } catch (e) {
-            return ["gemini-1.5-flash", "gemini-1.5-pro"];
-        }
     }
 
     async function callGeminiApiDirect(apiKey, entry) {
@@ -403,7 +403,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        const modelsToTry = await fetchValidGeminiModels(apiKey);
+        const modelsToTry = ["gemini-1.5-flash", "gemini-2.0-flash"];
         let lastError = "";
 
         for (const model of modelsToTry) {
@@ -417,6 +417,12 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
                 const data = await resp.json();
                 if (!resp.ok) {
+                    if (resp.status === 403) {
+                        throw new Error("La clave API introducida no es válida o fue revocada por seguridad en Google AI Studio (Error 403). Por favor ingresa a '❓ Obtener Clave' y crea una clave nueva.");
+                    }
+                    if (resp.status === 429) {
+                        throw new Error("Has alcanzado el límite de solicitudes por minuto de la API gratuita de Gemini. Espera 20 segundos y vuelve a pulsar Generar.");
+                    }
                     lastError = data.error ? data.error.message : JSON.stringify(data);
                     continue;
                 }
@@ -428,11 +434,14 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
                 return JSON.parse(textResp);
             } catch (e) {
+                if (e.message.includes("403") || e.message.includes("límite")) {
+                    throw e;
+                }
                 lastError = e.message;
             }
         }
 
-        throw new Error(`Error al conectar con Gemini API. Verifique su clave API. Detalle: ${lastError}`);
+        throw new Error(`No se pudo conectar con la API de Gemini. Detalle: ${lastError}`);
     }
 
     // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS
