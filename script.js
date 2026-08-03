@@ -289,12 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
-                    const apiKey = apiKeyInput.value.trim();
-                    if (!apiKey) {
-                        alert("Por favor, ingresa tu Clave API de Gemini en la barra superior.");
-                        apiModal.classList.add("show");
-                        return;
-                    }
+                    const apiKey = "AIzaSyBLnVNWCJPZKkjkxqcm59G_ZMhM5p7reS4";
 
                     const loaderOverlay = document.getElementById("loaderOverlay");
                     document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
