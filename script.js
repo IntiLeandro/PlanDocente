@@ -353,7 +353,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
                         let name = m.name || "";
                         if (name.startsWith("models/")) name = name.substring(7);
-                        validModels.push(name);
+                        // Excluir nombres con -latest que dan 404 en v1beta
+                        if (!name.includes("latest")) {
+                            validModels.push(name);
+                        }
                     }
                 }
             }
