@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateStats();
     });
 
-    // Botón para generar TODAS las clases del día activo automáticamente con pausas inteligentes
+    // Botón para generar TODAS las clases del día activo
     document.getElementById("btnGenAllDay").addEventListener("click", async () => {
         const userKey = apiKeyInput ? apiKeyInput.value.trim() : "";
         if (!userKey) {
@@ -113,43 +113,30 @@ document.addEventListener("DOMContentLoaded", () => {
             count++;
             document.getElementById("loaderText").textContent = `Procesando lección ${count} de ${processable.length} (${entry.area}) con IA Gemini...`;
 
-            let retries = 0;
-            let success = false;
-            while (!success && retries < 3) {
-                try {
-                    const parsedJson = await callGeminiApiDirect(userKey, entry);
-                    entry.unidad = parsedJson.unidad || "";
-                    entry.tema = parsedJson.tema || "";
-                    entry.capacidad = parsedJson.capacidad || "";
-                    entry.indicadores = parsedJson.indicadores || [];
-                    entry.motivacion = parsedJson.motivacion || "";
-                    entry.desarrollo = parsedJson.desarrollo || "";
-                    entry.conclusion = parsedJson.conclusion || "";
-                    entry.fijacion = parsedJson.fijacion || "";
-                    entry.evaluacion = parsedJson.evaluacion || "";
-                    success = true;
-                } catch (err) {
-                    if (err.message.includes("velocidad") || err.message.includes("429")) {
-                        retries++;
-                        document.getElementById("loaderText").textContent = `Respetando límite de velocidad de Google... Reintentando automáticamente en 15s (${count}/${processable.length})...`;
-                        await new Promise(r => setTimeout(r, 15000));
-                    } else {
-                        alert(`Error en ${entry.area}: ` + err.message);
-                        break;
-                    }
-                }
+            try {
+                const parsedJson = await callGeminiApiDirect(userKey, entry);
+                entry.unidad = parsedJson.unidad || "";
+                entry.tema = parsedJson.tema || "";
+                entry.capacidad = parsedJson.capacidad || "";
+                entry.indicadores = parsedJson.indicadores || [];
+                entry.motivacion = parsedJson.motivacion || "";
+                entry.desarrollo = parsedJson.desarrollo || "";
+                entry.conclusion = parsedJson.conclusion || "";
+                entry.fijacion = parsedJson.fijacion || "";
+                entry.evaluacion = parsedJson.evaluacion || "";
+                renderSlots();
+            } catch (err) {
+                alert(`Error en ${entry.area}: ` + err.message);
             }
 
-            renderSlots();
-
             if (count < processable.length) {
-                await new Promise(r => setTimeout(r, 2500));
+                await new Promise(r => setTimeout(r, 2000));
             }
         }
 
         loaderOverlay.classList.remove("show");
         document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
-        alert(`¡Todas las clases de ${activeDay} han sido generadas con éxito! 🎉`);
+        alert(`¡Procesamiento de ${activeDay} completado! 🎉`);
     });
 
     function updateStats() {
@@ -357,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateStats();
             });
 
-            // AI Generation button con reintento automático sin ventanas emergentes de error
+            // AI Generation button (1 SOLO INTENTO DIRECTO SIN REINTENTOS)
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
@@ -369,43 +356,31 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     const loaderOverlay = document.getElementById("loaderOverlay");
+                    document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
                     loaderOverlay.classList.add("show");
 
-                    let retries = 0;
-                    let success = false;
-                    while (!success && retries < 3) {
-                        document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
-                        try {
-                            const parsedJson = await callGeminiApiDirect(userKey, entry);
-                            entry.unidad = parsedJson.unidad || "";
-                            entry.tema = parsedJson.tema || "";
-                            entry.capacidad = parsedJson.capacidad || "";
-                            entry.indicadores = parsedJson.indicadores || [];
-                            entry.motivacion = parsedJson.motivacion || "";
-                            entry.desarrollo = parsedJson.desarrollo || "";
-                            entry.conclusion = parsedJson.conclusion || "";
-                            entry.fijacion = parsedJson.fijacion || "";
-                            entry.evaluacion = parsedJson.evaluacion || "";
+                    try {
+                        const parsedJson = await callGeminiApiDirect(userKey, entry);
+                        entry.unidad = parsedJson.unidad || "";
+                        entry.tema = parsedJson.tema || "";
+                        entry.capacidad = parsedJson.capacidad || "";
+                        entry.indicadores = parsedJson.indicadores || [];
+                        entry.motivacion = parsedJson.motivacion || "";
+                        entry.desarrollo = parsedJson.desarrollo || "";
+                        entry.conclusion = parsedJson.conclusion || "";
+                        entry.fijacion = parsedJson.fijacion || "";
+                        entry.evaluacion = parsedJson.evaluacion || "";
 
-                            renderSlots();
-                            success = true;
-                        } catch (err) {
-                            if (err.message.includes("velocidad") || err.message.includes("429")) {
-                                retries++;
-                                document.getElementById("loaderText").textContent = `Respetando límite de velocidad de Google... Reintentando automáticamente en 15s (Intento ${retries}/3)...`;
-                                await new Promise(r => setTimeout(r, 15000));
-                            } else {
-                                alert(err.message);
-                                if (apiModal && (err.message.includes("desactivada") || err.message.includes("inválida"))) {
-                                    apiModal.classList.add("show");
-                                }
-                                break;
-                            }
+                        renderSlots();
+                    } catch (err) {
+                        alert(err.message);
+                        if (apiModal && (err.message.includes("desactivada") || err.message.includes("inválida"))) {
+                            apiModal.classList.add("show");
                         }
+                    } finally {
+                        loaderOverlay.classList.remove("show");
+                        document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
                     }
-
-                    loaderOverlay.classList.remove("show");
-                    document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
                 });
             }
 
@@ -524,7 +499,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                         throw new Error("La Clave API ingresada fue desactivada o no es válida. Por favor crea una clave nueva en Google AI Studio (toma 10 segundos) y pégala en la casilla superior.");
                     }
                     if (resp.status === 429) {
-                        throw new Error("Límite de velocidad por minuto alcanzado. La app esperará automáticamente unos segundos.");
+                        throw new Error("Límite de velocidad por minuto alcanzado. Espera unos segundos e intenta nuevamente.");
                     }
                     lastError = errDetail;
                     continue;
