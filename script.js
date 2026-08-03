@@ -344,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateStats();
             });
 
-            // AI Generation button (1 SOLO INTENTO DIRECTO SIN REINTENTOS)
+            // AI Generation button
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
@@ -374,9 +374,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         renderSlots();
                     } catch (err) {
                         alert(err.message);
-                        if (apiModal && (err.message.includes("desactivada") || err.message.includes("inválida"))) {
-                            apiModal.classList.add("show");
-                        }
                     } finally {
                         loaderOverlay.classList.remove("show");
                         document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
@@ -495,13 +492,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 const data = await resp.json();
                 if (!resp.ok) {
                     const errDetail = data.error ? data.error.message : JSON.stringify(data);
-                    if (resp.status === 400 || resp.status === 403 || errDetail.includes("API_KEY_INVALID") || errDetail.includes("API key not valid") || errDetail.includes("revoked") || errDetail.includes("disabled")) {
-                        throw new Error("La Clave API ingresada fue desactivada o no es válida. Por favor crea una clave nueva en Google AI Studio (toma 10 segundos) y pégala en la casilla superior.");
-                    }
-                    if (resp.status === 429) {
-                        throw new Error("Límite de velocidad por minuto alcanzado. Espera unos segundos e intenta nuevamente.");
-                    }
-                    lastError = errDetail;
+                    lastError = `[HTTP ${resp.status}] ${errDetail}`;
                     continue;
                 }
 
@@ -512,14 +503,11 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
                 return JSON.parse(textResp);
             } catch (e) {
-                if (e.message.includes("desactivada") || e.message.includes("velocidad")) {
-                    throw e;
-                }
                 lastError = e.message;
             }
         }
 
-        throw new Error(`Error de Gemini API: ${lastError}`);
+        throw new Error(`Error de Google Gemini API: ${lastError}`);
     }
 
     // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS
