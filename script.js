@@ -695,7 +695,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                         return;
                     }
 
-                    // Standard Card (UNA SOLA TABLA UNIFICADA DE 4 FILAS CON columnSpan = 2)
+                    // Standard Card (UNA SOLA TABLA UNIFICADA DE 4 FILAS CON RECUADRO CONCLUIMOS RESALTADO 100% COMPATIBLE)
                     const momParas = [
                         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [new TextRun({ text: "Momentos Didácticos:", bold: true, size: 21, color: "1F4E78" })] }),
                         new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "a) Motivación / Inicio: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.motivacion), size: 19 })] }),
@@ -703,20 +703,20 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     ];
 
                     if (entry.conclusion) {
-                        const concTable = new Table({
-                            width: { size: 9500, type: WidthType.DXA },
-                            alignment: AlignmentType.CENTER,
-                            borders: { top: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, bottom: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" } },
-                            rows: [new TableRow({
-                                children: [new TableCell({
-                                    width: { size: 9500, type: WidthType.DXA },
-                                    shading: { fill: "EBF1F5" },
-                                    margins: { top: 60, bottom: 60, left: 120, right: 120 },
-                                    children: [new Paragraph({ children: [new TextRun({ text: "Concluimos: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.conclusion, size: 19 })] })]
-                                })]
-                            })]
-                        });
-                        momParas.push(concTable);
+                        momParas.push(new Paragraph({
+                            spacing: { before: 100, after: 100 },
+                            shading: { fill: "EBF1F5", type: ShadingType.CLEAR },
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" },
+                                bottom: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" },
+                                left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" },
+                                right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }
+                            },
+                            children: [
+                                new TextRun({ text: "  Concluimos: ", bold: true, size: 19, color: "1F4E78" }),
+                                new TextRun({ text: entry.conclusion, size: 19 })
+                            ]
+                        }));
                     }
 
                     momParas.push(new Paragraph({ spacing: { before: 60, after: 60 }, children: [new TextRun({ text: "c) Fijación / Cierre: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.fijacion), size: 19 })] }));
