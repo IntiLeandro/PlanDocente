@@ -16,39 +16,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let activeDay = "Lunes";
 
+    // Horarios predeterminados con campos de notas 100% LIMPIOS Y VACÍOS
     const defaultSchedule = {
         "Lunes": [
-            { time_slot: "08:00 - 08:40 hs", area: "COMUNICACIÓN", prompt_notes: "Dar hechos y opiniones en poesía El puente", image_files: [] },
-            { time_slot: "08:40 - 09:30 hs", area: "SALUD", prompt_notes: "Sexualidad humana págs. 61-64", image_files: [] },
-            { time_slot: "09:50 - 10:20 hs", area: "CIENCIAS SOCIALES", prompt_notes: "Recursos naturales Cuenca del Plata págs. 72-73", image_files: [] },
-            { time_slot: "10:20 - 10:50 hs", area: "GUARANÍ", prompt_notes: "Ñe'ẽhovaigua antónimos pág. 69", image_files: [] },
-            { time_slot: "10:50 - 11:30 hs", area: "MATEMÁTICA", prompt_notes: "Medidas de longitud El metro págs. 111-113", image_files: [] },
-            { time_slot: "11:30 - 12:00 hs", area: "TRABAJO Y TECNOLOGÍA", prompt_notes: "CPU y Memorias RAM/ROM págs. 63-64", image_files: [] }
+            { time_slot: "08:00 - 08:40 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] },
+            { time_slot: "08:40 - 09:30 hs", area: "SALUD", prompt_notes: "", image_files: [] },
+            { time_slot: "09:50 - 10:20 hs", area: "CIENCIAS SOCIALES", prompt_notes: "", image_files: [] },
+            { time_slot: "10:20 - 10:50 hs", area: "GUARANÍ", prompt_notes: "", image_files: [] },
+            { time_slot: "10:50 - 11:30 hs", area: "MATEMÁTICA", prompt_notes: "", image_files: [] },
+            { time_slot: "11:30 - 12:00 hs", area: "TRABAJO Y TECNOLOGÍA", prompt_notes: "", image_files: [] }
         ],
         "Martes": [
-            { time_slot: "08:00 - 08:40 hs", area: "COMUNICACIÓN", prompt_notes: "El Adjetivo calificativo y concordancia págs. 114-115", image_files: [] },
-            { time_slot: "08:40 - 09:30 hs", area: "CIENCIAS SOCIALES", prompt_notes: "Recursos culturales del Paraguay págs. 74-75", image_files: [] },
-            { time_slot: "09:50 - 10:10 hs", area: "SALUD", prompt_notes: "Prevención de la Violencia Infantil págs. 65-67", image_files: [] },
-            { time_slot: "10:50 - 11:30 hs", area: "MATEMÁTICA", prompt_notes: "Conversión de medidas de longitud págs. 114-115", image_files: [] },
-            { time_slot: "11:30 - 12:00 hs", area: "CIENCIAS NATURALES", prompt_notes: "El Equilibrio en la Naturaleza págs. 86-87", image_files: [] }
+            { time_slot: "08:00 - 08:40 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] },
+            { time_slot: "08:40 - 09:30 hs", area: "CIENCIAS SOCIALES", prompt_notes: "", image_files: [] },
+            { time_slot: "09:50 - 10:10 hs", area: "SALUD", prompt_notes: "", image_files: [] },
+            { time_slot: "10:50 - 11:30 hs", area: "MATEMÁTICA", prompt_notes: "", image_files: [] },
+            { time_slot: "11:30 - 12:00 hs", area: "CIENCIAS NATURALES", prompt_notes: "", image_files: [] }
         ],
         "Miércoles": [
-            { time_slot: "08:40 - 09:30 hs", area: "TRABAJO Y TECNOLOGÍA", prompt_notes: "Periféricos de almacenamiento entrada y salida págs. 65-67", image_files: [] },
-            { time_slot: "09:50 - 10:30 hs", area: "MATEMÁTICA", prompt_notes: "Medidas de Capacidad El Litro págs. 116-117", image_files: [] },
-            { time_slot: "10:30 - 10:50 hs", area: "GUARANÍ", prompt_notes: "Mombe'u'anga Descripción pág. 70", image_files: [] },
-            { time_slot: "11:20 - 12:00 hs", area: "COMUNICACIÓN", prompt_notes: "Ortografía uso de B y descripción de frutas págs. 116-117", image_files: [] }
+            { time_slot: "08:40 - 09:30 hs", area: "TRABAJO Y TECNOLOGÍA", prompt_notes: "", image_files: [] },
+            { time_slot: "09:50 - 10:30 hs", area: "MATEMÁTICA", prompt_notes: "", image_files: [] },
+            { time_slot: "10:30 - 10:50 hs", area: "GUARANÍ", prompt_notes: "", image_files: [] },
+            { time_slot: "11:20 - 12:00 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] }
         ],
         "Jueves": [
-            { time_slot: "09:50 - 10:20 hs", area: "CIENCIAS NATURALES", prompt_notes: "Cadenas alimentarias y pirámide págs. 88-89", image_files: [] },
-            { time_slot: "10:20 - 10:50 hs", area: "SALUD", prompt_notes: "ITS Gonorrea y Sífilis págs. 70-72", image_files: [] },
-            { time_slot: "10:50 - 11:30 hs", area: "COMUNICACIÓN", prompt_notes: "Descripción de personas y animales págs. 118-119", image_files: [] },
-            { time_slot: "11:30 - 12:00 hs", area: "MATEMÁTICA", prompt_notes: "Problemas prácticos con medidas de capacidad págs. 118-119", image_files: [] }
+            { time_slot: "09:50 - 10:20 hs", area: "CIENCIAS NATURALES", prompt_notes: "", image_files: [] },
+            { time_slot: "10:20 - 10:50 hs", area: "SALUD", prompt_notes: "", image_files: [] },
+            { time_slot: "10:50 - 11:30 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] },
+            { time_slot: "11:30 - 12:00 hs", area: "MATEMÁTICA", prompt_notes: "", image_files: [] }
         ],
         "Viernes": [
-            { time_slot: "08:40 - 09:30 hs", area: "EDUCACIÓN ARTÍSTICA (ARTES PLÁSTICAS)", prompt_notes: "Colores armónicos pág. 22", image_files: [] },
+            { time_slot: "08:40 - 09:30 hs", area: "EDUCACIÓN ARTÍSTICA (ARTES PLÁSTICAS)", prompt_notes: "", image_files: [] },
             { time_slot: "09:50 - 10:00 hs", area: "ÑE'ẼRY", is_neery: true, texto: "'La vaca Nicolasa' (de Marisa Moreno)", tiempo: "10 minutos", image_files: [] },
-            { time_slot: "10:00 - 11:00 hs", area: "COMUNICACIÓN", prompt_notes: "Análisis literario La vaca Nicolasa págs. 120-122", image_files: [] },
-            { time_slot: "11:00 - 12:00 hs", area: "MATEMÁTICA", prompt_notes: "Medidas de masa El Kilogramo y Tonelada págs. 120-121", image_files: [] }
+            { time_slot: "10:00 - 11:00 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] },
+            { time_slot: "11:00 - 12:00 hs", area: "MATEMÁTICA", prompt_notes: "", image_files: [] }
         ]
     };
 
@@ -142,8 +143,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="slot-fields">
                         <div class="form-group full">
-                            <label>Indicaciones o Temas de la Lección (Notas):</label>
-                            <input type="text" class="input-notes" value="${entry.prompt_notes || ''}" placeholder="Ej: Páginas 61 a 64 sobre Sexualidad Humana">
+                            <label>Indicaciones o Temas (Opcional):</label>
+                            <input type="text" class="input-notes" value="${entry.prompt_notes || ''}" placeholder="Dejar vacío o escribir aclaración opcional...">
                         </div>
                         
                         ${!entry.is_special && !entry.is_neery ? `
@@ -340,7 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Consulta dinámicamente los modelos válidos para la Clave API
     async function fetchValidGeminiModels(apiKey) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
         try {
@@ -353,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
                         let name = m.name || "";
                         if (name.startsWith("models/")) name = name.substring(7);
-                        // Excluir nombres con -latest que dan 404 en v1beta
                         if (!name.includes("latest")) {
                             validModels.push(name);
                         }
@@ -369,7 +368,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Direct Gemini API Call Handler (Runs 100% in Browser)
     async function callGeminiApiDirect(apiKey, entry) {
         const parts = [];
         
@@ -387,8 +385,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         let userText = `Área curricular: ${entry.area}.\n`;
-        if (entry.prompt_notes) userText += `Instrucciones o notas adicionales de la docente: ${entry.prompt_notes}\n`;
-        userText += "Extrae y redacta la planificación completa en JSON consolidando la información de todas las fotos enviadas.";
+        if (entry.prompt_notes && entry.prompt_notes.trim()) {
+            userText += `Instrucciones o notas adicionales de la docente: ${entry.prompt_notes.trim()}\n`;
+        }
+        userText += "Extrae y redacta la planificación didáctica completa en JSON analizando la información de las fotos enviadas.";
 
         parts.push({ text: userText });
 
@@ -451,7 +451,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
         throw new Error(`Error al conectar con Gemini API. Verifique su clave API. Detalle: ${lastError}`);
     }
 
-    // Generación Client-Side de Word (.docx) usando docx.js (runs 100% in browser!)
+    // Generación Client-Side de Word (.docx) usando docx.js con bordes y alineaciones idénticas a python-docx
     document.getElementById("btnGenerateDocx").addEventListener("click", async () => {
         if (!window.docx) {
             alert("Cargando motor de generación de Word... Intente de nuevo en unos segundos.");
@@ -471,12 +471,15 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
         try {
             const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType } = window.docx;
 
+            const borderLight = { style: BorderStyle.SINGLE, size: 4, color: "B0C4DE" };
+            const borderDark = { style: BorderStyle.SINGLE, size: 6, color: "2F5597" };
+
             const children = [];
 
             // Title
             children.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 100 },
+                spacing: { after: 60 },
                 children: [
                     new TextRun({ text: institucion.toUpperCase(), bold: true, size: 36, color: "1F4E78", font: "Arial" })
                 ]
@@ -484,27 +487,35 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
             children.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 200 },
+                spacing: { after: 180 },
                 children: [
                     new TextRun({ text: semanaTitulo.toUpperCase(), bold: true, size: 26, color: "2F5597", font: "Arial" })
                 ]
             }));
 
-            // Header Table
+            // Header Table (Datos Informativos)
             const infoTable = new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                    top: borderLight, bottom: borderLight, left: borderLight, right: borderLight,
+                    insideHorizontal: borderLight, insideVertical: borderLight
+                },
                 rows: [
                     new TableRow({
                         children: [
                             new TableCell({
+                                width: { size: 50, type: WidthType.PERCENTAGE },
                                 shading: { fill: "F2F5F9" },
+                                margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
                                     new TextRun({ text: "Docente: ", bold: true, size: 19, color: "1F4E78" }),
                                     new TextRun({ text: docenteName, size: 19 })
                                 ]})]
                             }),
                             new TableCell({
+                                width: { size: 50, type: WidthType.PERCENTAGE },
                                 shading: { fill: "FFFFFF" },
+                                margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
                                     new TextRun({ text: "Grado: ", bold: true, size: 19, color: "1F4E78" }),
                                     new TextRun({ text: grado, size: 19 })
@@ -515,14 +526,18 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     new TableRow({
                         children: [
                             new TableCell({
+                                width: { size: 50, type: WidthType.PERCENTAGE },
                                 shading: { fill: "FFFFFF" },
+                                margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
                                     new TextRun({ text: "Institución: ", bold: true, size: 19, color: "1F4E78" }),
                                     new TextRun({ text: institucion, size: 19 })
                                 ]})]
                             }),
                             new TableCell({
+                                width: { size: 50, type: WidthType.PERCENTAGE },
                                 shading: { fill: "F2F5F9" },
+                                margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
                                     new TextRun({ text: "Horario General: ", bold: true, size: 19, color: "1F4E78" }),
                                     new TextRun({ text: horarioGeneral, size: 19 })
@@ -533,7 +548,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 ]
             });
             children.push(infoTable);
-            children.push(new Paragraph({ spacing: { after: 200 } }));
+            children.push(new Paragraph({ spacing: { after: 180 } }));
 
             // Loop Days
             for (const [dayName, entries] of Object.entries(scheduleData)) {
@@ -542,9 +557,12 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 // Day Banner
                 const dayTable = new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
                     rows: [new TableRow({
                         children: [new TableCell({
+                            width: { size: 100, type: WidthType.PERCENTAGE },
                             shading: { fill: "2F5597" },
+                            margins: { top: 100, bottom: 100, left: 150, right: 150 },
                             children: [new Paragraph({ children: [
                                 new TextRun({ text: `📌 ${dayName.toUpperCase()}`, bold: true, size: 24, color: "FFFFFF" })
                             ]})]
@@ -561,62 +579,72 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     if (entry.is_special) {
                         const specTable = new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            borders: { top: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" }, bottom: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" }, left: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" }, right: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" } },
                             rows: [new TableRow({
                                 children: [new TableCell({
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
                                     shading: { fill: "FFF2CC" },
+                                    margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                     children: [
-                                        new Paragraph({ children: [new TextRun({ text: `🎨 ${dayName.toUpperCase()} | ${timeSlot} — ${area.toUpperCase()}`, bold: true, size: 21, color: "964B00" })] }),
-                                        new Paragraph({ children: [new TextRun({ text: "Clase a cargo de Docente Especialista de Área.", italic: true, size: 18, color: "643C00" })] })
+                                        new Paragraph({ children: [new TextRun({ text: `🎨 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ${area.toUpperCase()}`, bold: true, size: 21, color: "964B00" })] }),
+                                        new Paragraph({ children: [new TextRun({ text: "Clase a cargo de Docente Especialista de Área. (No requiere desarrollo de planificación en la carpeta didáctica).", italic: true, size: 18, color: "643C00" })] })
                                     ]
                                 })]
                             })]
                         });
                         children.push(specTable);
-                        children.push(new Paragraph({ spacing: { after: 200 } }));
+                        children.push(new Paragraph({ spacing: { after: 180 } }));
                         return;
                     }
 
                     if (entry.is_neery) {
-                        const neeryTable = new Table({
+                        const neeryHeaderTable = new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
                             rows: [
                                 new TableRow({
                                     children: [new TableCell({
+                                        width: { size: 100, type: WidthType.PERCENTAGE },
                                         shading: { fill: "1F4E78" },
+                                        margins: { top: 120, bottom: 120, left: 150, right: 150 },
                                         children: [new Paragraph({ children: [new TextRun({ text: `📖 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ÑE'ẼRY`, bold: true, size: 22, color: "FFFFFF" })] })]
                                     })]
                                 })
                             ]
                         });
-                        children.push(neeryTable);
+                        children.push(neeryHeaderTable);
 
                         const hTable = new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark, insideHorizontal: borderDark, insideVertical: borderDark },
                             rows: [
-                                ["Área:", " Lengua Materna / Comunicación"],
+                                ["Área:", " Lengua Materna / Comunicación (Lectura, Escritura y Oralidad)"],
                                 ["Estrategia:", " Tertulias Literarias Dialógicas"],
-                                ["Texto:", ` ${entry.texto || "'La vaca Nicolasa'"}`],
+                                ["Texto:", ` ${entry.texto || "'La vaca Nicolasa' (de Marisa Moreno)"}`],
                                 ["Espacio:", " Rincón de Lectura"],
                                 ["Tiempo Estimado:", ` ${entry.tiempo || "10 minutos"}`]
-                            ].map(([lbl, val], idx) => new TableRow({
+                            ].map(([lbl, val]) => new TableRow({
                                 children: [
-                                    new TableCell({ shading: { fill: "F2F5F9" }, children: [new Paragraph({ children: [new TextRun({ text: lbl, bold: true, size: 19, color: "1F4E78" })] })] }),
-                                    new TableCell({ shading: { fill: "FFFFFF" }, children: [new Paragraph({ children: [new TextRun({ text: val, size: 19 })] })] })
+                                    new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: "F2F5F9" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: lbl, bold: true, size: 19, color: "1F4E78" })] })] }),
+                                    new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, shading: { fill: "FFFFFF" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: val, size: 19 })] })] })
                                 ]
                             }))
                         });
                         children.push(hTable);
-                        children.push(new Paragraph({ spacing: { after: 200 } }));
+                        children.push(new Paragraph({ spacing: { after: 180 } }));
                         return;
                     }
 
-                    // Standard Card
+                    // Standard Card (📅 Icon)
                     const cardHeaderTable = new Table({
                         width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
                         rows: [new TableRow({
                             children: [new TableCell({
+                                width: { size: 100, type: WidthType.PERCENTAGE },
                                 shading: { fill: "1F4E78" },
-                                children: [new Paragraph({ children: [new TextRun({ text: `📅 ${dayName.toUpperCase()} | ${timeSlot} — ÁREA: ${area.toUpperCase()}`, bold: true, size: 22, color: "FFFFFF" })] })]
+                                margins: { top: 120, bottom: 120, left: 150, right: 150 },
+                                children: [new Paragraph({ children: [new TextRun({ text: `📅 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ÁREA: ${area.toUpperCase()}`, bold: true, size: 22, color: "FFFFFF" })] })]
                             })]
                         })]
                     });
@@ -624,27 +652,32 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
                     const metaTable = new Table({
                         width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: { top: borderLight, bottom: borderLight, left: borderLight, right: borderLight, insideHorizontal: borderLight, insideVertical: borderLight },
                         rows: [
                             new TableRow({
                                 children: [
-                                    new TableCell({ shading: { fill: "F2F5F9" }, children: [new Paragraph({ children: [new TextRun({ text: "Unidad Temática: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.unidad || "", size: 19 })] })] }),
-                                    new TableCell({ shading: { fill: "F2F5F9" }, children: [new Paragraph({ children: [new TextRun({ text: "Tema: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.tema || "", size: 19 })] })] })
+                                    new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, shading: { fill: "F2F5F9" }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: "Unidad Temática: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.unidad || "", size: 19 })] })] }),
+                                    new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, shading: { fill: "F2F5F9" }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: "Tema: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.tema || "", size: 19 })] })] })
                                 ]
                             }),
                             new TableRow({
                                 children: [
                                     new TableCell({
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
                                         shading: { fill: "FFFFFF" },
+                                        margins: { top: 100, bottom: 100, left: 120, right: 120 },
                                         children: [
-                                            new Paragraph({ children: [new TextRun({ text: "Capacidad:", bold: true, size: 20, color: "1F4E78" })] }),
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Capacidad:", bold: true, size: 20, color: "1F4E78" })] }),
                                             new Paragraph({ children: [new TextRun({ text: `• ${entry.capacidad || ''}`, size: 18 })] })
                                         ]
                                     }),
                                     new TableCell({
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
                                         shading: { fill: "FFFFFF" },
+                                        margins: { top: 100, bottom: 100, left: 120, right: 120 },
                                         children: [
-                                            new Paragraph({ children: [new TextRun({ text: "Indicadores:", bold: true, size: 20, color: "1F4E78" })] }),
-                                            ...(entry.indicadores || []).map(ind => new Paragraph({ children: [new TextRun({ text: `• ${ind}`, size: 18 })] }))
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Indicadores:", bold: true, size: 20, color: "1F4E78" })] }),
+                                            ...(entry.indicadores || []).map(ind => new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: `• ${ind}`, size: 18 })] }))
                                         ]
                                     })
                                 ]
@@ -653,19 +686,22 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     });
                     children.push(metaTable);
 
-                    // Momentos Didácticos
+                    // Momentos Didácticos Box
                     const momParas = [
-                        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Momentos Didácticos:", bold: true, size: 21, color: "1F4E78" })] }),
-                        new Paragraph({ children: [new TextRun({ text: "a) Motivación / Inicio: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.motivacion), size: 19 })] }),
-                        new Paragraph({ children: [new TextRun({ text: "b) Desarrollo: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.desarrollo), size: 19 })] })
+                        new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 100 }, children: [new TextRun({ text: "Momentos Didácticos:", bold: true, size: 21, color: "1F4E78" })] }),
+                        new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "a) Motivación / Inicio: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.motivacion), size: 19 })] }),
+                        new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "b) Desarrollo: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.desarrollo), size: 19 })] })
                     ];
 
                     if (entry.conclusion) {
                         const concTable = new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            borders: { top: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, bottom: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" } },
                             rows: [new TableRow({
                                 children: [new TableCell({
+                                    width: { size: 100, type: WidthType.PERCENTAGE },
                                     shading: { fill: "EBF1F5" },
+                                    margins: { top: 60, bottom: 60, left: 120, right: 120 },
                                     children: [new Paragraph({ children: [new TextRun({ text: "Concluimos: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.conclusion, size: 19 })] })]
                                 })]
                             })]
@@ -673,13 +709,14 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                         momParas.push(concTable);
                     }
 
-                    momParas.push(new Paragraph({ children: [new TextRun({ text: "c) Fijación / Cierre: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.fijacion), size: 19 })] }));
-                    momParas.push(new Paragraph({ children: [new TextRun({ text: "d) Evaluación: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.evaluacion), size: 19 })] }));
+                    momParas.push(new Paragraph({ spacing: { before: 60, after: 60 }, children: [new TextRun({ text: "c) Fijación / Cierre: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.fijacion), size: 19 })] }));
+                    momParas.push(new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "d) Evaluación: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.evaluacion), size: 19 })] }));
 
                     const momBox = new Table({
                         width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
                         rows: [new TableRow({
-                            children: [new TableCell({ shading: { fill: "FAFAFA" }, children: momParas })]
+                            children: [new TableCell({ width: { size: 100, type: WidthType.PERCENTAGE }, shading: { fill: "FAFAFA" }, margins: { top: 120, bottom: 120, left: 150, right: 150 }, children: momParas })]
                         })]
                     });
                     children.push(momBox);
