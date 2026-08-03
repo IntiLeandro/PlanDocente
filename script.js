@@ -1,18 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // LocalStorage para la Clave API de Gemini
-    const apiKeyInput = document.getElementById("apiKey");
-    const savedKey = localStorage.getItem("gemini_api_key") || "";
-    if (savedKey) apiKeyInput.value = savedKey;
-
-    apiKeyInput.addEventListener("change", () => {
-        localStorage.setItem("gemini_api_key", apiKeyInput.value.trim());
-    });
-
-    // Modal de Ayuda para API Key
-    const apiModal = document.getElementById("apiModal");
-    document.getElementById("btnHelpApi").addEventListener("click", () => apiModal.classList.add("show"));
-    document.getElementById("btnCloseModal").addEventListener("click", () => apiModal.classList.remove("show"));
-    document.getElementById("btnGotIt").addEventListener("click", () => apiModal.classList.remove("show"));
+    // Clave API de Gemini integrada automáticamente
+    const GEMINI_API_KEY = "AIzaSyBLnVNWCJPZKkjkxqcm59G_ZMhM5p7reS4";
 
     let activeDay = "Lunes";
 
@@ -289,14 +277,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
-                    const apiKey = "AIzaSyBLnVNWCJPZKkjkxqcm59G_ZMhM5p7reS4";
-
                     const loaderOverlay = document.getElementById("loaderOverlay");
                     document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
                     loaderOverlay.classList.add("show");
 
                     try {
-                        const parsedJson = await callGeminiApiDirect(apiKey, entry);
+                        const parsedJson = await callGeminiApiDirect(GEMINI_API_KEY, entry);
                         entry.unidad = parsedJson.unidad || "";
                         entry.tema = parsedJson.tema || "";
                         entry.capacidad = parsedJson.capacidad || "";
@@ -446,7 +432,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
         throw new Error(`Error al conectar con Gemini API. Verifique su clave API. Detalle: ${lastError}`);
     }
 
-    // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS por tarjeta (0% distorsión / 100% alineación)
+    // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS
     document.getElementById("btnGenerateDocx").addEventListener("click", async () => {
         if (!window.docx) {
             alert("Cargando motor de generación de Word... Intente de nuevo en unos segundos.");
