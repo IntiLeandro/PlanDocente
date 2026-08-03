@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateStats();
             });
 
-            // AI Generation button (Client-Side Direct Call to Gemini API)
+            // AI Generation button
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
@@ -328,7 +328,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSlots();
     updateStats();
 
-    // Helper: Convert File object to Base64
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -339,6 +338,32 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             reader.onerror = error => reject(error);
         });
+    }
+
+    // Consulta dinámicamente los modelos válidos para la Clave API
+    async function fetchValidGeminiModels(apiKey) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) return ["gemini-1.5-flash", "gemini-2.0-flash"];
+            const data = await resp.json();
+            const validModels = [];
+            if (data.models && Array.isArray(data.models)) {
+                for (const m of data.models) {
+                    if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
+                        let name = m.name || "";
+                        if (name.startsWith("models/")) name = name.substring(7);
+                        validModels.push(name);
+                    }
+                }
+            }
+            const flashModels = validModels.filter(m => m.toLowerCase().includes("flash"));
+            const otherModels = validModels.filter(m => !m.toLowerCase().includes("flash"));
+            const combined = [...flashModels, ...otherModels];
+            return combined.length > 0 ? combined : ["gemini-1.5-flash", "gemini-2.0-flash"];
+        } catch (e) {
+            return ["gemini-1.5-flash", "gemini-2.0-flash"];
+        }
     }
 
     // Direct Gemini API Call Handler (Runs 100% in Browser)
@@ -391,7 +416,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        const modelsToTry = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"];
+        const modelsToTry = await fetchValidGeminiModels(apiKey);
         let lastError = "";
 
         for (const model of modelsToTry) {
@@ -420,7 +445,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         }
 
-        throw new Error(`Error al conectar con Gemini: ${lastError}`);
+        throw new Error(`Error al conectar con Gemini API. Verifique su clave API. Detalle: ${lastError}`);
     }
 
     // Generación Client-Side de Word (.docx) usando docx.js (runs 100% in browser!)
