@@ -63,6 +63,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let scheduleData = JSON.parse(JSON.stringify(defaultSchedule));
 
+    // Cargar borrador de planificaciones si existe
+    loadDraft();
+
+    function saveDraft() {
+        try {
+            const clone = JSON.parse(JSON.stringify(scheduleData));
+            Object.values(clone).forEach(arr => {
+                arr.forEach(entry => {
+                    delete entry.image_files;
+                });
+            });
+            localStorage.setItem("plandocente_schedule_draft", JSON.stringify(clone));
+        } catch (e) {
+            console.error("Draft save error", e);
+        }
+    }
+
+    function loadDraft() {
+        const saved = localStorage.getItem("plandocente_schedule_draft");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed === "object") {
+                    scheduleData = parsed;
+                    Object.values(scheduleData).forEach(arr => {
+                        arr.forEach(entry => {
+                            if (!entry.image_files) entry.image_files = [];
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error("Draft load error", e);
+            }
+        }
+    }
+
     const tabBtns = document.querySelectorAll(".tab-btn");
     const currentDayTitle = document.getElementById("currentDayTitle");
     const slotsContainer = document.getElementById("slotsContainer");
@@ -84,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
             prompt_notes: "",
             image_files: []
         });
+        saveDraft();
         renderSlots();
         updateStats();
     });
@@ -124,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 entry.conclusion = parsedJson.conclusion || "";
                 entry.fijacion = parsedJson.fijacion || "";
                 entry.evaluacion = parsedJson.evaluacion || "";
+                saveDraft();
                 renderSlots();
             } catch (err) {
                 alert(`Error en ${entry.area}: ` + err.message);
@@ -195,8 +233,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="slot-body">
                     <div class="upload-box">
                         <span class="icon">📷</span>
-                        <p><strong>Arrastra o selecciona 1 o más fotos</strong> del libro</p>
-                        <input type="file" class="file-input" accept="image/*" multiple style="display: none;">
+                        <p><strong>Fotos del libro de texto / lección</strong></p>
+                        <div class="upload-actions">
+                            <button type="button" class="btn-upload-opt btn-take-photo">📷 Tomar Foto</button>
+                            <button type="button" class="btn-upload-opt btn-choose-gallery">🖼️ Elejir de Galería</button>
+                        </div>
+                        <input type="file" class="file-input-cam" accept="image/*" capture="environment" style="display: none;">
+                        <input type="file" class="file-input-gal" accept="image/*" multiple style="display: none;">
                         <div class="img-gallery"></div>
                     </div>
 
@@ -261,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Bind slot inputs
             const timeIn = slotCard.querySelector(".input-time");
-            timeIn.addEventListener("input", e => entry.time_slot = e.target.value);
+            timeIn.addEventListener("input", e => { entry.time_slot = e.target.value; saveDraft(); });
 
             const selectArea = slotCard.querySelector(".select-area");
             selectArea.addEventListener("change", e => {
@@ -269,30 +312,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 entry.area = val;
                 entry.is_special = (val === "CLASE ESPECIALISTA");
                 entry.is_neery = (val === "ÑE'ẼRY");
+                saveDraft();
                 renderSlots();
             });
 
             const notesIn = slotCard.querySelector(".input-notes");
-            notesIn.addEventListener("input", e => entry.prompt_notes = e.target.value);
+            notesIn.addEventListener("input", e => { entry.prompt_notes = e.target.value; saveDraft(); });
 
-            const uploadBox = slotCard.querySelector(".upload-box");
-            const fileInput = slotCard.querySelector(".file-input");
+            const btnTakePhoto = slotCard.querySelector(".btn-take-photo");
+            const btnChooseGallery = slotCard.querySelector(".btn-choose-gallery");
+            const fileInputCam = slotCard.querySelector(".file-input-cam");
+            const fileInputGal = slotCard.querySelector(".file-input-gal");
             const imgGallery = slotCard.querySelector(".img-gallery");
 
             renderGallery();
 
-            uploadBox.addEventListener("click", () => fileInput.click());
-            uploadBox.addEventListener("dragover", e => e.preventDefault());
-            uploadBox.addEventListener("drop", e => {
-                e.preventDefault();
-                if (e.dataTransfer.files.length) {
-                    addFiles(Array.from(e.dataTransfer.files));
+            if (btnTakePhoto) btnTakePhoto.addEventListener("click", () => fileInputCam.click());
+            if (btnChooseGallery) btnChooseGallery.addEventListener("click", () => fileInputGal.click());
+
+            fileInputCam.addEventListener("change", () => {
+                if (fileInputCam.files.length) {
+                    addFiles(Array.from(fileInputCam.files));
+                    fileInputCam.value = "";
                 }
             });
 
-            fileInput.addEventListener("change", () => {
-                if (fileInput.files.length) {
-                    addFiles(Array.from(fileInput.files));
+            fileInputGal.addEventListener("change", () => {
+                if (fileInputGal.files.length) {
+                    addFiles(Array.from(fileInputGal.files));
+                    fileInputGal.value = "";
                 }
             });
 
@@ -309,37 +357,56 @@ document.addEventListener("DOMContentLoaded", () => {
                 imgGallery.innerHTML = "";
                 if (!entry.image_files || entry.image_files.length === 0) return;
 
-                entry.image_files.forEach(file => {
+                entry.image_files.forEach((file, fIdx) => {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "thumb-wrapper";
+
                     const img = document.createElement("img");
-                    img.className = "img-thumb";
+                    img.className = "thumb-img";
                     const reader = new FileReader();
                     reader.onload = e => img.src = e.target.result;
                     reader.readAsDataURL(file);
-                    imgGallery.appendChild(img);
+
+                    const btnRemove = document.createElement("button");
+                    btnRemove.type = "button";
+                    btnRemove.className = "btn-remove-thumb";
+                    btnRemove.innerHTML = "&times;";
+                    btnRemove.title = "Eliminar esta foto";
+                    btnRemove.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        entry.image_files.splice(fIdx, 1);
+                        renderGallery();
+                    });
+
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(btnRemove);
+                    imgGallery.appendChild(wrapper);
                 });
             }
 
             // Sync text fields
             ["unidad", "tema", "conclusion"].forEach(f => {
                 const el = slotCard.querySelector(`.input-${f}`);
-                if (el) el.addEventListener("input", e => entry[f] = e.target.value);
+                if (el) el.addEventListener("input", e => { entry[f] = e.target.value; saveDraft(); });
             });
 
             ["capacidad", "motivacion", "desarrollo", "fijacion", "evaluacion"].forEach(f => {
                 const el = slotCard.querySelector(`.input-${f}`);
-                if (el) el.addEventListener("input", e => entry[f] = e.target.value);
+                if (el) el.addEventListener("input", e => { entry[f] = e.target.value; saveDraft(); });
             });
 
             const indEl = slotCard.querySelector(".input-indicadores");
             if (indEl) {
                 indEl.addEventListener("input", e => {
                     entry.indicadores = e.target.value.split('\n').filter(x => x.trim());
+                    saveDraft();
                 });
             }
 
             // Delete slot
             slotCard.querySelector(".btn-del-slot").addEventListener("click", () => {
                 scheduleData[activeDay].splice(index, 1);
+                saveDraft();
                 renderSlots();
                 updateStats();
             });
@@ -371,6 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         entry.fijacion = parsedJson.fijacion || "";
                         entry.evaluacion = parsedJson.evaluacion || "";
 
+                        saveDraft();
                         renderSlots();
                     } catch (err) {
                         alert(err.message);

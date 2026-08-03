@@ -410,25 +410,43 @@ input[type="text"], textarea, select {
 .upload-box {
     border: 2px dashed var(--border-color);
     border-radius: var(--radius-md);
-    padding: 14px;
+    padding: 16px;
     text-align: center;
     background: rgba(15, 23, 42, 0.4);
+    transition: var(--transition-fast);
+}
+
+.upload-box:hover {
+    border-color: var(--primary-light);
+    background: rgba(47, 85, 151, 0.1);
+}
+
+.upload-actions {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    gap: 10px;
     justify-content: center;
-    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.btn-upload-opt {
+    background: rgba(47, 85, 151, 0.2);
+    color: #93C5FD;
+    border: 1px solid rgba(47, 85, 151, 0.4);
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
-    min-height: 140px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-fast);
 }
 
-.upload-box .icon {
-    font-size: 28px;
-}
-
-.upload-box p {
-    font-size: 11px;
-    color: var(--text-muted);
+.btn-upload-opt:hover {
+    background: rgba(47, 85, 151, 0.4);
+    color: #FFFFFF;
 }
 
 .img-gallery {
