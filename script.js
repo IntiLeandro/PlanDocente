@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCloseModal = document.getElementById("btnCloseModal");
     const btnGotIt = document.getElementById("btnGotIt");
 
-    // Guardar y cargar la API Key desde el almacenamiento local del navegador (LocalStorage)
+    // Cargar la API Key desde el almacenamiento local del navegador (LocalStorage)
     const savedApiKey = localStorage.getItem("plandocente_gemini_key") || "";
     if (apiKeyInput && savedApiKey) {
         apiKeyInput.value = savedApiKey;
@@ -86,6 +86,71 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         renderSlots();
         updateStats();
+    });
+
+    // Botón para generar TODAS las clases del día activo automáticamente con pausas inteligentes
+    document.getElementById("btnGenAllDay").addEventListener("click", async () => {
+        const userKey = apiKeyInput ? apiKeyInput.value.trim() : "";
+        if (!userKey) {
+            alert("Por favor ingresa tu Clave API de Gemini en la casilla superior para continuar.");
+            if (apiModal) apiModal.classList.add("show");
+            return;
+        }
+
+        const entries = scheduleData[activeDay] || [];
+        const processable = entries.filter(e => !e.is_special && !e.is_neery);
+
+        if (processable.length === 0) {
+            alert(`No hay clases configurables para procesar en el día ${activeDay}.`);
+            return;
+        }
+
+        const loaderOverlay = document.getElementById("loaderOverlay");
+        loaderOverlay.classList.add("show");
+
+        let count = 0;
+        for (const entry of processable) {
+            count++;
+            document.getElementById("loaderText").textContent = `Procesando lección ${count} de ${processable.length} (${entry.area}) con IA Gemini...`;
+
+            let retries = 0;
+            let success = false;
+            while (!success && retries < 3) {
+                try {
+                    const parsedJson = await callGeminiApiDirect(userKey, entry);
+                    entry.unidad = parsedJson.unidad || "";
+                    entry.tema = parsedJson.tema || "";
+                    entry.capacidad = parsedJson.capacidad || "";
+                    entry.indicadores = parsedJson.indicadores || [];
+                    entry.motivacion = parsedJson.motivacion || "";
+                    entry.desarrollo = parsedJson.desarrollo || "";
+                    entry.conclusion = parsedJson.conclusion || "";
+                    entry.fijacion = parsedJson.fijacion || "";
+                    entry.evaluacion = parsedJson.evaluacion || "";
+                    success = true;
+                } catch (err) {
+                    if (err.message.includes("velocidad") || err.message.includes("429")) {
+                        retries++;
+                        document.getElementById("loaderText").textContent = `Pausando 15 segundos para respetar límite de velocidad de Google (${count}/${processable.length})...`;
+                        await new Promise(r => setTimeout(r, 15000));
+                    } else {
+                        alert(`Error en ${entry.area}: ` + err.message);
+                        break;
+                    }
+                }
+            }
+
+            renderSlots();
+
+            // Pausa inteligente de 2.5 segundos entre peticiones para no saturar la API
+            if (count < processable.length) {
+                await new Promise(r => setTimeout(r, 2500));
+            }
+        }
+
+        loaderOverlay.classList.remove("show");
+        document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
+        alert(`¡Todas las clases de ${activeDay} han sido generadas con éxito! 🎉`);
     });
 
     function updateStats() {
@@ -323,9 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         renderSlots();
                     } catch (err) {
                         alert(err.message);
-                        if (apiModal && (err.message.includes("403") || err.message.includes("clave"))) {
-                            apiModal.classList.add("show");
-                        }
+                        if (apiModal) apiModal.classList.add("show");
                     } finally {
                         loaderOverlay.classList.remove("show");
                         document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
@@ -403,45 +466,37 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        const modelsToTry = ["gemini-1.5-flash", "gemini-2.0-flash"];
-        let lastError = "";
+        const model = "gemini-1.5-flash";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+        
+        try {
+            const resp = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
-        for (const model of modelsToTry) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
-            try {
-                const resp = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await resp.json();
-                if (!resp.ok) {
-                    if (resp.status === 403) {
-                        throw new Error("La clave API introducida no es válida o fue revocada por seguridad en Google AI Studio (Error 403). Por favor ingresa a '❓ Obtener Clave' y crea una clave nueva.");
-                    }
-                    if (resp.status === 429) {
-                        throw new Error("Has alcanzado el límite de solicitudes por minuto de la API gratuita de Gemini. Espera 20 segundos y vuelve a pulsar Generar.");
-                    }
-                    lastError = data.error ? data.error.message : JSON.stringify(data);
-                    continue;
+            const data = await resp.json();
+            if (!resp.ok) {
+                const errDetail = data.error ? data.error.message : JSON.stringify(data);
+                if (resp.status === 400 || resp.status === 403 || errDetail.includes("API_KEY_INVALID") || errDetail.includes("API key not valid") || errDetail.includes("revoked") || errDetail.includes("disabled")) {
+                    throw new Error("La Clave API ingresada fue desactivada o no es válida. Por favor crea una clave nueva en Google AI Studio (toma 10 segundos) y pégala en la casilla superior.");
                 }
-
-                let textResp = data.candidates[0].content.parts[0].text.trim();
-                if (textResp.startsWith("```json")) textResp = textResp.substring(7);
-                if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
-                textResp = textResp.trim();
-
-                return JSON.parse(textResp);
-            } catch (e) {
-                if (e.message.includes("403") || e.message.includes("límite")) {
-                    throw e;
+                if (resp.status === 429 && errDetail.includes("Quota exceeded")) {
+                    throw new Error("Límite de velocidad por minuto alcanzado. La app esperará automáticamente unos segundos.");
                 }
-                lastError = e.message;
+                throw new Error(`Error de Gemini API: ${errDetail}`);
             }
-        }
 
-        throw new Error(`No se pudo conectar con la API de Gemini. Detalle: ${lastError}`);
+            let textResp = data.candidates[0].content.parts[0].text.trim();
+            if (textResp.startsWith("```json")) textResp = textResp.substring(7);
+            if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
+            textResp = textResp.trim();
+
+            return JSON.parse(textResp);
+        } catch (e) {
+            throw e;
+        }
     }
 
     // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS

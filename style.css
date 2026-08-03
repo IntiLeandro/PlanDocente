@@ -249,6 +249,24 @@ details[open] summary .chevron {
     background: rgba(15, 23, 42, 0.3);
 }
 
+.btn-ai-day {
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.btn-ai-day:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
 .card-header h2, .card-header h3 {
     font-family: var(--font-heading);
     font-size: 15px;
