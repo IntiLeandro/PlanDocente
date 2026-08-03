@@ -2,198 +2,146 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlanDocente AI - Planificación Semanal para Profesores</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PlanDocente | Generador de Planificaciones Semanales EEB Paraguay</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0F172A">
+    <meta name="description" content="Generador Inteligente de Planificaciones Didácticas Semanales para docentes de Paraguay integrado con IA Gemini.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3426/3426653.png">
+    
+    <!-- Fonts & docx.js CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Lucide Icons & html2pdf -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4F46E5">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3429/3429994.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- App Header -->
     <header class="app-header">
-        <div class="logo-container">
-            <div class="logo-icon">
-                <i data-lucide="book-open-check"></i>
+        <div class="header-container">
+            <div class="brand">
+                <div class="logo-icon">✨</div>
+                <div>
+                    <h1>PlanDocente IA</h1>
+                    <p class="subtitle">4º Grado EEB • Paraguay</p>
+                </div>
             </div>
-            <div>
-                <h1>PlanDocente <span class="badge-ai">AI</span></h1>
-                <p class="subtitle">Generador de Planificación Semanal Escolar mediante Fotos de Libros</p>
+            
+            <div class="api-key-box">
+                <div class="input-wrapper">
+                    <label for="apiKey">🔑 Clave API Gemini:</label>
+                    <input type="password" id="apiKey" placeholder="AIzaSy..." autocomplete="off">
+                </div>
+                <button type="button" class="btn-help" id="btnHelpApi" title="Obtener API Key gratis">
+                    ❓ Obtener Clave
+                </button>
             </div>
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-outline" id="btn-config-api" onclick="openApiModal()">
-                <i data-lucide="key"></i> Configurar API Key IA
-            </button>
-            <button class="btn btn-outline" id="btn-example-demo">
-                <i data-lucide="sparkles"></i> Ejemplo Demo
-            </button>
-            <button class="btn btn-primary" onclick="downloadPDF()">
-                <i data-lucide="file-down"></i> Descargar PDF
-            </button>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="main-layout">
-        
-        <!-- Left Sidebar: Controls & Inputs -->
-        <aside class="sidebar-panel">
+    <!-- Navegador de Días Pegajoso -->
+    <nav class="sticky-days-bar">
+        <div class="days-container">
+            <div class="tabs-list">
+                <button class="tab-btn active" data-day="Lunes">Lunes</button>
+                <button class="tab-btn" data-day="Martes">Martes</button>
+                <button class="tab-btn" data-day="Miércoles">Miércoles</button>
+                <button class="tab-btn" data-day="Jueves">Jueves</button>
+                <button class="tab-btn" data-day="Viernes">Viernes</button>
+            </div>
+            <button type="button" class="btn-add-quick" id="btnAddSlot">
+                <span>➕ Bloque</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="app-main">
+        <!-- Panel de Configuración General (Desplegable) -->
+        <details class="card config-card" open>
+            <summary class="card-header flex-between">
+                <h2>📋 Datos del Planificador y la Institución</h2>
+                <span class="chevron">▼</span>
+            </summary>
+            <div class="grid-form">
+                <div class="form-group">
+                    <label for="docenteName">Docente Titular:</label>
+                    <input type="text" id="docenteName" value="Viviana Chamorro González">
+                </div>
+                <div class="form-group">
+                    <label for="grado">Grado:</label>
+                    <input type="text" id="grado" value="4º Grado EEB">
+                </div>
+                <div class="form-group">
+                    <label for="institucion">Institución Educativa:</label>
+                    <input type="text" id="institucion" value="Colegio Santa Carolina">
+                </div>
+                <div class="form-group">
+                    <label for="horarioGeneral">Horario General:</label>
+                    <input type="text" id="horarioGeneral" value="08:00 a 12:00 hs">
+                </div>
+                <div class="form-group full-width">
+                    <label for="semanaTitulo">Título de la Semana:</label>
+                    <input type="text" id="semanaTitulo" value="PLANIFICACIÓN SEMANAL (DEL 3 AL 7 DE AGOSTO DE 2026)">
+                </div>
+            </div>
+        </details>
+
+        <!-- Contenedor del Día Activo -->
+        <section class="card entries-card">
+            <div class="card-header flex-between">
+                <h3 id="currentDayTitle">📌 Bloques Horarios de Lunes</h3>
+            </div>
             
-            <!-- 1. Datos Generales de la Semana -->
-            <div class="panel-card">
-                <h2 class="panel-title"><i data-lucide="calendar"></i> 1. Configuración de la Semana</h2>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="curso"><i data-lucide="graduation-cap"></i> Año / Grado</label>
-                        <select id="curso">
-                            <option value="1° Grado Primaria">1° Primaria</option>
-                            <option value="2° Grado Primaria">2° Primaria</option>
-                            <option value="3° Grado Primaria">3° Primaria</option>
-                            <option value="4° Grado Primaria" selected>4° Primaria</option>
-                            <option value="5° Grado Primaria">5° Primaria</option>
-                            <option value="6° Grado Primaria">6° Primaria</option>
-                            <option value="1° Año Secundaria">1° Secundaria</option>
-                            <option value="2° Año Secundaria">2° Secundaria</option>
-                            <option value="3° Año Secundaria">3° Secundaria</option>
-                            <option value="4° Año Secundaria">4° Secundaria</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="semana-rango"><i data-lucide="clock"></i> Semana del</label>
-                        <input type="text" id="semana-rango" value="04 al 08 de Agosto">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. Materias y Contenidos de la Semana -->
-            <div class="panel-card">
-                <div class="panel-header-flex">
-                    <h2 class="panel-title"><i data-lucide="layers"></i> 2. Materias a Planificar</h2>
-                </div>
-                <p class="section-desc">Agrega las materias que enseñarás esta semana. Puedes subir fotos de las páginas del libro o escribir una observación/tema directo.</p>
-
-                <div id="subjects-inputs-container">
-                    <!-- Subject blocks dynamically managed -->
-                </div>
-
-                <button class="btn btn-outline btn-add-subject" id="btn-add-subject-block" type="button">
-                    <i data-lucide="plus-circle"></i> Agregar Otra Materia a la Semana
-                </button>
-            </div>
-
-            <!-- Generate Button -->
-            <div class="panel-card">
-                <button class="btn btn-primary btn-generate" id="btn-generate-plan">
-                    <i data-lucide="sparkles"></i> Generar Planificación Semanal Multimateria
-                </button>
-            </div>
-        </aside>
-
-        <!-- Right Container: Planning View & Editor -->
-        <section class="content-panel">
-            <div class="plan-wrapper" id="plan-wrapper">
-                
-                <!-- Document Header -->
-                <div class="doc-header">
-                    <div class="doc-badge">PLANIFICACIÓN DOCENTE SEMANAL INTEGRAL</div>
-                    <h2 class="doc-title" id="doc-title-main" contenteditable="true">Planificación Semanal Didáctica</h2>
-                    
-                    <div class="doc-meta-grid">
-                        <div class="meta-item">
-                            <span class="meta-label">Institución:</span>
-                            <span class="meta-value" id="doc-escuela" contenteditable="true">Escuela N° 12 "República Argentina"</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Docente:</span>
-                            <span class="meta-value" id="doc-profesor" contenteditable="true">Prof. Maria Gonzalez</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Grado / Curso:</span>
-                            <span class="meta-value" id="doc-curso-display">4° Primaria</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Semana del:</span>
-                            <span class="meta-value" id="doc-fecha-display">04 al 08 de Agosto</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Subjects Weekly Container -->
-                <div id="doc-subjects-container" class="subjects-weekly-container">
-                    <!-- Dynamic Subject Cards for the week generated by JS -->
-                </div>
-
-                <!-- Evaluacion y Recursos -->
-                <div class="doc-section card-style grid-2col">
-                    <div>
-                        <h4 class="sub-heading"><i data-lucide="box"></i> Recursos y Materiales Didácticos</h4>
-                        <ul id="plan-recursos" contenteditable="true">
-                            <li>Libro de texto del alumno (Páginas escaneadas).</li>
-                            <li>Lámina ilustrativa del ciclo del agua.</li>
-                            <li>Vaso de cristal, agua caliente y cubos de hielo para demostración práctica en el aula.</li>
-                            <li>Cuaderno de clase y lápices de colores.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="sub-heading"><i data-lucide="check-square"></i> Criterios e Instrumentos de Evaluación</h4>
-                        <ul id="plan-evaluacion" contenteditable="true">
-                            <li>Participación activa durante las preguntas disparadoras del inicio.</li>
-                            <li>Correcta resolución de las actividades y diagramas de las páginas del libro.</li>
-                            <li>Capacidad de explicar con sus propias palabras el proceso de evaporación y condensación.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Teacher Signatures / Footer -->
-                <div class="doc-footer">
-                    <div class="signature-box">
-                        <div class="signature-line">Firma del Docente</div>
-                    </div>
-                    <div class="signature-box">
-                        <div class="signature-line">Ficha / Visado Dirección</div>
-                    </div>
-                </div>
-
+            <div id="slotsContainer" class="slots-container">
+                <!-- Se puebla dinámicamente desde script.js -->
             </div>
         </section>
+
+        <!-- Barra de Acción Flotante Inferior -->
+        <div class="action-bar">
+            <div class="action-info">
+                <span class="status-indicator">● Listo</span>
+                <span id="planStats">0 clases</span>
+            </div>
+            <button type="button" class="btn-primary-lg" id="btnGenerateDocx">
+                📥 Descargar Word (.docx)
+            </button>
+        </div>
     </main>
 
-    <!-- API Key Modal -->
-    <div class="modal-overlay hidden" id="api-modal">
+    <!-- Modal Informativo: Cómo obtener API Key de Gemini -->
+    <div class="modal-backdrop" id="apiModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3><i data-lucide="cpu"></i> Conectar Modelo de IA (Gemini API)</h3>
-                <button class="modal-close" id="btn-close-modal" onclick="closeApiModal()">&times;</button>
+                <h3>🔑 Obtener Clave API Gratis</h3>
+                <button class="btn-close" id="btnCloseModal">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-desc">Ingresa tu <strong>API Key gratuita de Google Gemini</strong> para analizar directamente la foto del libro con Inteligencia Artificial en tiempo real.</p>
-                <div class="form-group">
-                    <label for="gemini-key">Gemini API Key</label>
-                    <input type="password" id="gemini-key" placeholder="AIzaSy...">
-                </div>
-                <small class="help-text">Puedes obtener una clave gratuita en <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>. Se guarda solo en tu navegador.</small>
+                <p>Google ofrece acceso <strong>100% gratuito</strong> a la API de Gemini desde <strong>Google AI Studio</strong>:</p>
+                <ol class="steps-list">
+                    <li>Ingresa a <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a>.</li>
+                    <li>Haz clic en <code>Create API key</code>.</li>
+                    <li>Copia la clave (<code>AIzaSy...</code>) y pégala arriba. Se guardará de forma segura en tu navegador.</li>
+                </ol>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" id="btn-save-key" onclick="saveApiKey()">Guardar Clave</button>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-primary" rel="noopener">🌐 Ir a AI Studio</a>
+                <button type="button" class="btn-secondary" id="btnGotIt">Entendido</button>
             </div>
         </div>
     </div>
 
+    <!-- Indicador de Carga / Spinner -->
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="spinner-card">
+            <div class="spinner"></div>
+            <p id="loaderText">Procesando con la IA de Gemini...</p>
+        </div>
+    </div>
+
     <script src="script.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
 </body>
 </html>
