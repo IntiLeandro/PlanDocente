@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Clave API de Gemini integrada automáticamente
-    const GEMINI_API_KEY = "AIzaSyBLnVNWCJPZKkjkxqcm59G_ZMhM5p7reS4";
+    // Clave API de Gemini integrada por defecto
+    const DEFAULT_GEMINI_API_KEY = "AIzaSyBLnVNWCJPZKkjkxqcm59G_ZMhM5p7reS4";
 
     let activeDay = "Lunes";
 
@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const val = e.target.value;
                 entry.area = val;
                 entry.is_special = (val === "CLASE ESPECIALISTA");
-                entry.is_neery = (val === "ÑE'ẼRY");
+                entry.is_neery = (val === "ÑE'ẽRY");
                 renderSlots();
             });
 
@@ -282,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     loaderOverlay.classList.add("show");
 
                     try {
-                        const parsedJson = await callGeminiApiDirect(GEMINI_API_KEY, entry);
+                        const parsedJson = await callGeminiApiDirect(DEFAULT_GEMINI_API_KEY, entry);
                         entry.unidad = parsedJson.unidad || "";
                         entry.tema = parsedJson.tema || "";
                         entry.capacidad = parsedJson.capacidad || "";
@@ -322,11 +322,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Consulta dinámicamente los modelos válidos priorizando siempre gemini-1.5-flash
     async function fetchValidGeminiModels(apiKey) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
         try {
             const resp = await fetch(url);
-            if (!resp.ok) return ["gemini-1.5-flash", "gemini-2.0-flash"];
+            if (!resp.ok) return ["gemini-1.5-flash", "gemini-1.5-pro"];
             const data = await resp.json();
             const validModels = [];
             if (data.models && Array.isArray(data.models)) {
@@ -340,12 +341,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
             }
-            const flashModels = validModels.filter(m => m.toLowerCase().includes("flash"));
-            const otherModels = validModels.filter(m => !m.toLowerCase().includes("flash"));
-            const combined = [...flashModels, ...otherModels];
-            return combined.length > 0 ? combined : ["gemini-1.5-flash", "gemini-2.0-flash"];
+            // PRIORIZAR gemini-1.5-flash PRIMERO (15 RPM / 1500 RPD Gratuito)
+            const g15Flash = validModels.filter(m => m === "gemini-1.5-flash");
+            const otherFlash = validModels.filter(m => m.includes("flash") && m !== "gemini-1.5-flash");
+            const rest = validModels.filter(m => !m.includes("flash"));
+            const combined = [...g15Flash, ...otherFlash, ...rest];
+            return combined.length > 0 ? combined : ["gemini-1.5-flash", "gemini-1.5-pro"];
         } catch (e) {
-            return ["gemini-1.5-flash", "gemini-2.0-flash"];
+            return ["gemini-1.5-flash", "gemini-1.5-pro"];
         }
     }
 
