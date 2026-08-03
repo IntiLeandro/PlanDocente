@@ -360,9 +360,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 entry.image_files.forEach((file, fIdx) => {
                     const wrapper = document.createElement("div");
                     wrapper.className = "thumb-wrapper";
+                    wrapper.style.width = "64px";
+                    wrapper.style.height = "64px";
 
                     const img = document.createElement("img");
-                    img.className = "thumb-img";
+                    img.className = "thumb-img img-thumb";
+                    img.style.width = "64px";
+                    img.style.height = "64px";
+                    img.style.objectFit = "cover";
+                    img.style.borderRadius = "8px";
+
                     const reader = new FileReader();
                     reader.onload = e => img.src = e.target.result;
                     reader.readAsDataURL(file);

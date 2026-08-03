@@ -452,17 +452,32 @@ input[type="text"], textarea, select {
 .img-gallery {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 12px;
+    margin-top: 10px;
     justify-content: center;
-    margin-top: 6px;
 }
 
-.img-thumb {
-    width: 55px;
-    height: 55px;
-    border-radius: 6px;
-    object-fit: cover;
-    border: 1px solid var(--border-color);
+.thumb-wrapper {
+    position: relative;
+    width: 64px !important;
+    height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.thumb-img, .img-thumb, .img-gallery img {
+    width: 64px !important;
+    height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+    border: 2px solid #2F5597 !important;
+    background: #0F172A !important;
+    display: block !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
 
 .slot-fields {
