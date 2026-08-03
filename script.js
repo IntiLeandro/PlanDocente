@@ -142,7 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             renderSlots();
 
-            // Pausa inteligente de 2.5 segundos entre peticiones para no saturar la API
             if (count < processable.length) {
                 await new Promise(r => setTimeout(r, 2500));
             }
@@ -388,7 +387,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         renderSlots();
                     } catch (err) {
                         alert(err.message);
-                        if (apiModal) apiModal.classList.add("show");
+                        if (apiModal && (err.message.includes("desactivada") || err.message.includes("inválida"))) {
+                            apiModal.classList.add("show");
+                        }
                     } finally {
                         loaderOverlay.classList.remove("show");
                         document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
@@ -413,6 +414,32 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             reader.onerror = error => reject(error);
         });
+    }
+
+    // Consulta dinámicamente los modelos válidos disponibles para la clave ingresada
+    async function fetchValidGeminiModels(apiKey) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) return ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"];
+            const data = await resp.json();
+            const validModels = [];
+            if (data.models && Array.isArray(data.models)) {
+                for (const m of data.models) {
+                    if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
+                        let name = m.name || "";
+                        if (name.startsWith("models/")) name = name.substring(7);
+                        validModels.push(name);
+                    }
+                }
+            }
+            const flashModels = validModels.filter(m => m.includes("flash"));
+            const otherModels = validModels.filter(m => !m.includes("flash"));
+            const combined = [...flashModels, ...otherModels];
+            return combined.length > 0 ? combined : ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"];
+        } catch (e) {
+            return ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"];
+        }
     }
 
     async function callGeminiApiDirect(apiKey, entry) {
@@ -466,37 +493,46 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        const model = "gemini-1.5-flash";
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
-        
-        try {
-            const resp = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+        const modelsToTry = await fetchValidGeminiModels(apiKey);
+        let lastError = "";
 
-            const data = await resp.json();
-            if (!resp.ok) {
-                const errDetail = data.error ? data.error.message : JSON.stringify(data);
-                if (resp.status === 400 || resp.status === 403 || errDetail.includes("API_KEY_INVALID") || errDetail.includes("API key not valid") || errDetail.includes("revoked") || errDetail.includes("disabled")) {
-                    throw new Error("La Clave API ingresada fue desactivada o no es válida. Por favor crea una clave nueva en Google AI Studio (toma 10 segundos) y pégala en la casilla superior.");
+        for (const model of modelsToTry) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+            try {
+                const resp = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) {
+                    const errDetail = data.error ? data.error.message : JSON.stringify(data);
+                    if (resp.status === 400 || resp.status === 403 || errDetail.includes("API_KEY_INVALID") || errDetail.includes("API key not valid") || errDetail.includes("revoked") || errDetail.includes("disabled")) {
+                        throw new Error("La Clave API ingresada fue desactivada o no es válida. Por favor crea una clave nueva en Google AI Studio (toma 10 segundos) y pégala en la casilla superior.");
+                    }
+                    if (resp.status === 429) {
+                        throw new Error("Límite de velocidad por minuto alcanzado. La app esperará automáticamente unos segundos.");
+                    }
+                    lastError = errDetail;
+                    continue;
                 }
-                if (resp.status === 429 && errDetail.includes("Quota exceeded")) {
-                    throw new Error("Límite de velocidad por minuto alcanzado. La app esperará automáticamente unos segundos.");
+
+                let textResp = data.candidates[0].content.parts[0].text.trim();
+                if (textResp.startsWith("```json")) textResp = textResp.substring(7);
+                if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
+                textResp = textResp.trim();
+
+                return JSON.parse(textResp);
+            } catch (e) {
+                if (e.message.includes("desactivada") || e.message.includes("velocidad")) {
+                    throw e;
                 }
-                throw new Error(`Error de Gemini API: ${errDetail}`);
+                lastError = e.message;
             }
-
-            let textResp = data.candidates[0].content.parts[0].text.trim();
-            if (textResp.startsWith("```json")) textResp = textResp.substring(7);
-            if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
-            textResp = textResp.trim();
-
-            return JSON.parse(textResp);
-        } catch (e) {
-            throw e;
         }
+
+        throw new Error(`Error de Gemini API: ${lastError}`);
     }
 
     // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS
