@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let activeDay = "Lunes";
 
-    // Horarios predeterminados con campos de notas 100% LIMPIOS Y VACÍOS
+    // Horarios predeterminados con campos de notas LIMPIOS Y VACÍOS
     const defaultSchedule = {
         "Lunes": [
             { time_slot: "08:00 - 08:40 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] },
@@ -451,7 +451,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
         throw new Error(`Error al conectar con Gemini API. Verifique su clave API. Detalle: ${lastError}`);
     }
 
-    // Generación Client-Side de Word (.docx) usando docx.js con bordes y alineaciones idénticas a python-docx
+    // Generación Client-Side de Word (.docx) usando docx.js con UNA SOLA TABLA UNIFICADA DE 4 FILAS por tarjeta (0% distorsión / 100% alineación)
     document.getElementById("btnGenerateDocx").addEventListener("click", async () => {
         if (!window.docx) {
             alert("Cargando motor de generación de Word... Intente de nuevo en unos segundos.");
@@ -495,7 +495,8 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
             // Header Table (Datos Informativos)
             const infoTable = new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
+                width: { size: 9890, type: WidthType.DXA },
+                columnWidths: [4945, 4945],
                 borders: {
                     top: borderLight, bottom: borderLight, left: borderLight, right: borderLight,
                     insideHorizontal: borderLight, insideVertical: borderLight
@@ -504,7 +505,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     new TableRow({
                         children: [
                             new TableCell({
-                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                width: { size: 4945, type: WidthType.DXA },
                                 shading: { fill: "F2F5F9" },
                                 margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
@@ -513,7 +514,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                                 ]})]
                             }),
                             new TableCell({
-                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                width: { size: 4945, type: WidthType.DXA },
                                 shading: { fill: "FFFFFF" },
                                 margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
@@ -526,7 +527,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     new TableRow({
                         children: [
                             new TableCell({
-                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                width: { size: 4945, type: WidthType.DXA },
                                 shading: { fill: "FFFFFF" },
                                 margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
@@ -535,7 +536,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                                 ]})]
                             }),
                             new TableCell({
-                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                width: { size: 4945, type: WidthType.DXA },
                                 shading: { fill: "F2F5F9" },
                                 margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                 children: [new Paragraph({ children: [
@@ -554,13 +555,14 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             for (const [dayName, entries] of Object.entries(scheduleData)) {
                 if (!entries || entries.length === 0) continue;
 
-                // Day Banner
+                // Day Banner Table
                 const dayTable = new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    width: { size: 9890, type: WidthType.DXA },
+                    columnWidths: [9890],
                     borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
                     rows: [new TableRow({
                         children: [new TableCell({
-                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            width: { size: 9890, type: WidthType.DXA },
                             shading: { fill: "2F5597" },
                             margins: { top: 100, bottom: 100, left: 150, right: 150 },
                             children: [new Paragraph({ children: [
@@ -578,11 +580,12 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 
                     if (entry.is_special) {
                         const specTable = new Table({
-                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            width: { size: 9890, type: WidthType.DXA },
+                            columnWidths: [9890],
                             borders: { top: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" }, bottom: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" }, left: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" }, right: { style: BorderStyle.SINGLE, size: 8, color: "D6B656" } },
                             rows: [new TableRow({
                                 children: [new TableCell({
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    width: { size: 9890, type: WidthType.DXA },
                                     shading: { fill: "FFF2CC" },
                                     margins: { top: 100, bottom: 100, left: 150, right: 150 },
                                     children: [
@@ -598,108 +601,56 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     }
 
                     if (entry.is_neery) {
-                        const neeryHeaderTable = new Table({
-                            width: { size: 100, type: WidthType.PERCENTAGE },
-                            borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
+                        const neeryCardTable = new Table({
+                            width: { size: 9890, type: WidthType.DXA },
+                            columnWidths: [2967, 6923],
+                            borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark, insideHorizontal: borderLight, insideVertical: borderLight },
                             rows: [
+                                // Row 0: Banner Header
                                 new TableRow({
                                     children: [new TableCell({
-                                        width: { size: 100, type: WidthType.PERCENTAGE },
+                                        columnSpan: 2,
+                                        width: { size: 9890, type: WidthType.DXA },
                                         shading: { fill: "1F4E78" },
                                         margins: { top: 120, bottom: 120, left: 150, right: 150 },
                                         children: [new Paragraph({ children: [new TextRun({ text: `📖 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ÑE'ẼRY`, bold: true, size: 22, color: "FFFFFF" })] })]
                                     })]
-                                })
+                                }),
+                                // Fields
+                                ...[
+                                    ["Área:", " Lengua Materna / Comunicación (Lectura, Escritura y Oralidad)"],
+                                    ["Estrategia:", " Tertulias Literarias Dialógicas"],
+                                    ["Texto:", ` ${entry.texto || "'La vaca Nicolasa' (de Marisa Moreno)"}`],
+                                    ["Espacio:", " Rincón de Lectura"],
+                                    ["Tiempo Estimado:", ` ${entry.tiempo || "10 minutos"}`]
+                                ].map(([lbl, val]) => new TableRow({
+                                    children: [
+                                        new TableCell({ width: { size: 2967, type: WidthType.DXA }, shading: { fill: "F2F5F9" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: lbl, bold: true, size: 19, color: "1F4E78" })] })] }),
+                                        new TableCell({ width: { size: 6923, type: WidthType.DXA }, shading: { fill: "FFFFFF" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: val, size: 19 })] })] })
+                                    ]
+                                }))
                             ]
                         });
-                        children.push(neeryHeaderTable);
-
-                        const hTable = new Table({
-                            width: { size: 100, type: WidthType.PERCENTAGE },
-                            borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark, insideHorizontal: borderDark, insideVertical: borderDark },
-                            rows: [
-                                ["Área:", " Lengua Materna / Comunicación (Lectura, Escritura y Oralidad)"],
-                                ["Estrategia:", " Tertulias Literarias Dialógicas"],
-                                ["Texto:", ` ${entry.texto || "'La vaca Nicolasa' (de Marisa Moreno)"}`],
-                                ["Espacio:", " Rincón de Lectura"],
-                                ["Tiempo Estimado:", ` ${entry.tiempo || "10 minutos"}`]
-                            ].map(([lbl, val]) => new TableRow({
-                                children: [
-                                    new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: "F2F5F9" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: lbl, bold: true, size: 19, color: "1F4E78" })] })] }),
-                                    new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, shading: { fill: "FFFFFF" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: val, size: 19 })] })] })
-                                ]
-                            }))
-                        });
-                        children.push(hTable);
+                        children.push(neeryCardTable);
                         children.push(new Paragraph({ spacing: { after: 180 } }));
                         return;
                     }
 
-                    // Standard Card (📅 Icon)
-                    const cardHeaderTable = new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
-                        rows: [new TableRow({
-                            children: [new TableCell({
-                                width: { size: 100, type: WidthType.PERCENTAGE },
-                                shading: { fill: "1F4E78" },
-                                margins: { top: 120, bottom: 120, left: 150, right: 150 },
-                                children: [new Paragraph({ children: [new TextRun({ text: `📅 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ÁREA: ${area.toUpperCase()}`, bold: true, size: 22, color: "FFFFFF" })] })]
-                            })]
-                        })]
-                    });
-                    children.push(cardHeaderTable);
-
-                    const metaTable = new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        borders: { top: borderLight, bottom: borderLight, left: borderLight, right: borderLight, insideHorizontal: borderLight, insideVertical: borderLight },
-                        rows: [
-                            new TableRow({
-                                children: [
-                                    new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, shading: { fill: "F2F5F9" }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: "Unidad Temática: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.unidad || "", size: 19 })] })] }),
-                                    new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, shading: { fill: "F2F5F9" }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: "Tema: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.tema || "", size: 19 })] })] })
-                                ]
-                            }),
-                            new TableRow({
-                                children: [
-                                    new TableCell({
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        shading: { fill: "FFFFFF" },
-                                        margins: { top: 100, bottom: 100, left: 120, right: 120 },
-                                        children: [
-                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Capacidad:", bold: true, size: 20, color: "1F4E78" })] }),
-                                            new Paragraph({ children: [new TextRun({ text: `• ${entry.capacidad || ''}`, size: 18 })] })
-                                        ]
-                                    }),
-                                    new TableCell({
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        shading: { fill: "FFFFFF" },
-                                        margins: { top: 100, bottom: 100, left: 120, right: 120 },
-                                        children: [
-                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Indicadores:", bold: true, size: 20, color: "1F4E78" })] }),
-                                            ...(entry.indicadores || []).map(ind => new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: `• ${ind}`, size: 18 })] }))
-                                        ]
-                                    })
-                                ]
-                            })
-                        ]
-                    });
-                    children.push(metaTable);
-
-                    // Momentos Didácticos Box
+                    // Standard Card (UNA SOLA TABLA UNIFICADA DE 4 FILAS CON columnSpan = 2)
                     const momParas = [
-                        new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 100 }, children: [new TextRun({ text: "Momentos Didácticos:", bold: true, size: 21, color: "1F4E78" })] }),
+                        new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [new TextRun({ text: "Momentos Didácticos:", bold: true, size: 21, color: "1F4E78" })] }),
                         new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "a) Motivación / Inicio: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.motivacion), size: 19 })] }),
                         new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "b) Desarrollo: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.desarrollo), size: 19 })] })
                     ];
 
                     if (entry.conclusion) {
                         const concTable = new Table({
-                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            width: { size: 9500, type: WidthType.DXA },
+                            alignment: AlignmentType.CENTER,
                             borders: { top: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, bottom: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, left: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" }, right: { style: BorderStyle.SINGLE, size: 8, color: "1F4E78" } },
                             rows: [new TableRow({
                                 children: [new TableCell({
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
+                                    width: { size: 9500, type: WidthType.DXA },
                                     shading: { fill: "EBF1F5" },
                                     margins: { top: 60, bottom: 60, left: 120, right: 120 },
                                     children: [new Paragraph({ children: [new TextRun({ text: "Concluimos: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.conclusion, size: 19 })] })]
@@ -712,14 +663,64 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     momParas.push(new Paragraph({ spacing: { before: 60, after: 60 }, children: [new TextRun({ text: "c) Fijación / Cierre: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.fijacion), size: 19 })] }));
                     momParas.push(new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "d) Evaluación: ", bold: true, size: 19 }), new TextRun({ text: cleanPrefix(entry.evaluacion), size: 19 })] }));
 
-                    const momBox = new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark },
-                        rows: [new TableRow({
-                            children: [new TableCell({ width: { size: 100, type: WidthType.PERCENTAGE }, shading: { fill: "FAFAFA" }, margins: { top: 120, bottom: 120, left: 150, right: 150 }, children: momParas })]
-                        })]
+                    const cardTable = new Table({
+                        width: { size: 9890, type: WidthType.DXA },
+                        columnWidths: [4945, 4945],
+                        borders: { top: borderDark, bottom: borderDark, left: borderDark, right: borderDark, insideHorizontal: borderLight, insideVertical: borderLight },
+                        rows: [
+                            // Fila 0: Banner Azul Superior (columnSpan: 2)
+                            new TableRow({
+                                children: [new TableCell({
+                                    columnSpan: 2,
+                                    width: { size: 9890, type: WidthType.DXA },
+                                    shading: { fill: "1F4E78" },
+                                    margins: { top: 120, bottom: 120, left: 150, right: 150 },
+                                    children: [new Paragraph({ children: [new TextRun({ text: `📅 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ÁREA: ${area.toUpperCase()}`, bold: true, size: 22, color: "FFFFFF" })] })]
+                                })]
+                            }),
+                            // Fila 1: Unidad & Tema (2 columnas)
+                            new TableRow({
+                                children: [
+                                    new TableCell({ width: { size: 4945, type: WidthType.DXA }, shading: { fill: "F2F5F9" }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: "Unidad Temática: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.unidad || "", size: 19 })] })] }),
+                                    new TableCell({ width: { size: 4945, type: WidthType.DXA }, shading: { fill: "F2F5F9" }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: "Tema: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: entry.tema || "", size: 19 })] })] })
+                                ]
+                            }),
+                            // Fila 2: Capacidad & Indicadores (2 columnas)
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        width: { size: 4945, type: WidthType.DXA },
+                                        shading: { fill: "FFFFFF" },
+                                        margins: { top: 100, bottom: 100, left: 120, right: 120 },
+                                        children: [
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Capacidad:", bold: true, size: 20, color: "1F4E78" })] }),
+                                            new Paragraph({ children: [new TextRun({ text: `• ${entry.capacidad || ''}`, size: 18 })] })
+                                        ]
+                                    }),
+                                    new TableCell({
+                                        width: { size: 4945, type: WidthType.DXA },
+                                        shading: { fill: "FFFFFF" },
+                                        margins: { top: 100, bottom: 100, left: 120, right: 120 },
+                                        children: [
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Indicadores:", bold: true, size: 20, color: "1F4E78" })] }),
+                                            ...(entry.indicadores || []).map(ind => new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: `• ${ind}`, size: 18 })] }))
+                                        ]
+                                    })
+                                ]
+                            }),
+                            // Fila 3: Momentos Didácticos (columnSpan: 2)
+                            new TableRow({
+                                children: [new TableCell({
+                                    columnSpan: 2,
+                                    width: { size: 9890, type: WidthType.DXA },
+                                    shading: { fill: "FAFAFA" },
+                                    margins: { top: 120, bottom: 120, left: 150, right: 150 },
+                                    children: momParas
+                                })]
+                            })
+                        ]
                     });
-                    children.push(momBox);
+                    children.push(cardTable);
                     children.push(new Paragraph({ spacing: { after: 200 } }));
                 });
             }
