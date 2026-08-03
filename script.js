@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (err) {
                     if (err.message.includes("velocidad") || err.message.includes("429")) {
                         retries++;
-                        document.getElementById("loaderText").textContent = `Pausando 15 segundos para respetar límite de velocidad de Google (${count}/${processable.length})...`;
+                        document.getElementById("loaderText").textContent = `Respetando límite de velocidad de Google... Reintentando automáticamente en 15s (${count}/${processable.length})...`;
                         await new Promise(r => setTimeout(r, 15000));
                     } else {
                         alert(`Error en ${entry.area}: ` + err.message);
@@ -357,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateStats();
             });
 
-            // AI Generation button
+            // AI Generation button con reintento automático sin ventanas emergentes de error
             const btnAi = slotCard.querySelector(".btn-gen-ai");
             if (btnAi) {
                 btnAi.addEventListener("click", async () => {
@@ -369,31 +369,43 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     const loaderOverlay = document.getElementById("loaderOverlay");
-                    document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
                     loaderOverlay.classList.add("show");
 
-                    try {
-                        const parsedJson = await callGeminiApiDirect(userKey, entry);
-                        entry.unidad = parsedJson.unidad || "";
-                        entry.tema = parsedJson.tema || "";
-                        entry.capacidad = parsedJson.capacidad || "";
-                        entry.indicadores = parsedJson.indicadores || [];
-                        entry.motivacion = parsedJson.motivacion || "";
-                        entry.desarrollo = parsedJson.desarrollo || "";
-                        entry.conclusion = parsedJson.conclusion || "";
-                        entry.fijacion = parsedJson.fijacion || "";
-                        entry.evaluacion = parsedJson.evaluacion || "";
+                    let retries = 0;
+                    let success = false;
+                    while (!success && retries < 3) {
+                        document.getElementById("loaderText").textContent = `Analizando ${entry.image_files.length > 0 ? entry.image_files.length + ' foto(s)' : 'las notas'} con la IA de Gemini...`;
+                        try {
+                            const parsedJson = await callGeminiApiDirect(userKey, entry);
+                            entry.unidad = parsedJson.unidad || "";
+                            entry.tema = parsedJson.tema || "";
+                            entry.capacidad = parsedJson.capacidad || "";
+                            entry.indicadores = parsedJson.indicadores || [];
+                            entry.motivacion = parsedJson.motivacion || "";
+                            entry.desarrollo = parsedJson.desarrollo || "";
+                            entry.conclusion = parsedJson.conclusion || "";
+                            entry.fijacion = parsedJson.fijacion || "";
+                            entry.evaluacion = parsedJson.evaluacion || "";
 
-                        renderSlots();
-                    } catch (err) {
-                        alert(err.message);
-                        if (apiModal && (err.message.includes("desactivada") || err.message.includes("inválida"))) {
-                            apiModal.classList.add("show");
+                            renderSlots();
+                            success = true;
+                        } catch (err) {
+                            if (err.message.includes("velocidad") || err.message.includes("429")) {
+                                retries++;
+                                document.getElementById("loaderText").textContent = `Respetando límite de velocidad de Google... Reintentando automáticamente en 15s (Intento ${retries}/3)...`;
+                                await new Promise(r => setTimeout(r, 15000));
+                            } else {
+                                alert(err.message);
+                                if (apiModal && (err.message.includes("desactivada") || err.message.includes("inválida"))) {
+                                    apiModal.classList.add("show");
+                                }
+                                break;
+                            }
                         }
-                    } finally {
-                        loaderOverlay.classList.remove("show");
-                        document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
                     }
+
+                    loaderOverlay.classList.remove("show");
+                    document.getElementById("loaderText").textContent = "Procesando con la IA de Gemini...";
                 });
             }
 
