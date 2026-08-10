@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ],
         "Viernes": [
             { time_slot: "08:40 - 09:30 hs", area: "EDUCACIÓN ARTÍSTICA (ARTES PLÁSTICAS)", prompt_notes: "", image_files: [] },
-            { time_slot: "09:50 - 10:00 hs", area: "ÑE'ẼRY", is_neery: true, texto: "'La vaca Nicolasa' (de Marisa Moreno)", tiempo: "10 minutos", image_files: [] },
+            { time_slot: "09:50 - 10:00 hs", area: "ÑE'ẼRY", is_neery: true, texto: "", tiempo: "10 minutos", image_files: [] },
             { time_slot: "10:00 - 11:00 hs", area: "COMUNICACIÓN", prompt_notes: "", image_files: [] },
             { time_slot: "11:00 - 12:00 hs", area: "MATEMÁTICA", prompt_notes: "", image_files: [] }
         ]
@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateStats();
     });
 
-    // Botón para generar TODAS las clases del día activo
+    // Botón para generar TODAS las clases del día activo (Incluyendo Ñe'ẽry)
     document.getElementById("btnGenAllDay").addEventListener("click", async () => {
         const userKey = apiKeyInput ? apiKeyInput.value.trim() : "";
         if (!userKey) {
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const entries = scheduleData[activeDay] || [];
-        const processable = entries.filter(e => !e.is_special && !e.is_neery);
+        const processable = entries.filter(e => !e.is_special);
 
         if (processable.length === 0) {
             alert(`No hay clases configurables para procesar en el día ${activeDay}.`);
@@ -152,15 +152,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 const parsedJson = await callGeminiApiDirect(userKey, entry);
-                entry.unidad = parsedJson.unidad || "";
-                entry.tema = parsedJson.tema || "";
-                entry.capacidad = parsedJson.capacidad || "";
-                entry.indicadores = parsedJson.indicadores || [];
-                entry.motivacion = parsedJson.motivacion || "";
-                entry.desarrollo = parsedJson.desarrollo || "";
-                entry.conclusion = parsedJson.conclusion || "";
-                entry.fijacion = parsedJson.fijacion || "";
-                entry.evaluacion = parsedJson.evaluacion || "";
+                if (entry.is_neery) {
+                    entry.texto = parsedJson.texto || entry.texto || "";
+                    entry.tiempo = parsedJson.tiempo || entry.tiempo || "10 minutos";
+                    entry.neery_preparacion = parsedJson.neery_preparacion || "";
+                    entry.neery_lectura = parsedJson.neery_lectura || "";
+                    entry.neery_dialogo = parsedJson.neery_dialogo || [];
+                    entry.neery_cierre = parsedJson.neery_cierre || "";
+                } else {
+                    entry.unidad = parsedJson.unidad || "";
+                    entry.tema = parsedJson.tema || "";
+                    entry.capacidad = parsedJson.capacidad || "";
+                    entry.indicadores = parsedJson.indicadores || [];
+                    entry.motivacion = parsedJson.motivacion || "";
+                    entry.desarrollo = parsedJson.desarrollo || "";
+                    entry.conclusion = parsedJson.conclusion || "";
+                    entry.fijacion = parsedJson.fijacion || "";
+                    entry.evaluacion = parsedJson.evaluacion || "";
+                }
                 saveDraft();
                 renderSlots();
             } catch (err) {
@@ -289,13 +298,29 @@ document.addEventListener("DOMContentLoaded", () => {
                         ` : ''}
 
                         ${entry.is_neery ? `
-                            <div class="form-group">
-                                <label>Texto de la Tertulia:</label>
-                                <input type="text" class="input-texto-neery" value="${entry.texto || '\'La vaca Nicolasa\' (de Marisa Moreno)'}">
+                            <div class="form-group full">
+                                <label>Texto / Cuento / Poesía (Se extrae de la foto o se escribe aquí):</label>
+                                <input type="text" class="input-texto-neery" value="${entry.texto || ''}" placeholder="Ej: 'Enrique y el reloj'">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group full">
                                 <label>Tiempo Estimado:</label>
                                 <input type="text" class="input-tiempo-neery" value="${entry.tiempo || '10 minutos'}">
+                            </div>
+                            <div class="form-group full">
+                                <label>1. Preparación:</label>
+                                <textarea class="input-neery-prep" rows="2">${entry.neery_preparacion || ''}</textarea>
+                            </div>
+                            <div class="form-group full">
+                                <label>2. Lectura:</label>
+                                <textarea class="input-neery-lect" rows="2">${entry.neery_lectura || ''}</textarea>
+                            </div>
+                            <div class="form-group full">
+                                <label>3. Diálogo e Intercambio (Preguntas generadas por IA):</label>
+                                <textarea class="input-neery-dial" rows="3">${(entry.neery_dialogo || []).join('\n')}</textarea>
+                            </div>
+                            <div class="form-group full">
+                                <label>4. Cierre (Idea compartida):</label>
+                                <textarea class="input-neery-cierre" rows="2">${entry.neery_cierre || ''}</textarea>
                             </div>
                         ` : ''}
                     </div>
@@ -318,6 +343,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const notesIn = slotCard.querySelector(".input-notes");
             notesIn.addEventListener("input", e => { entry.prompt_notes = e.target.value; saveDraft(); });
+
+            if (entry.is_neery) {
+                const txtNeery = slotCard.querySelector(".input-texto-neery");
+                if (txtNeery) txtNeery.addEventListener("input", e => { entry.texto = e.target.value; saveDraft(); });
+
+                const tmpNeery = slotCard.querySelector(".input-tiempo-neery");
+                if (tmpNeery) tmpNeery.addEventListener("input", e => { entry.tiempo = e.target.value; saveDraft(); });
+
+                const prepNeery = slotCard.querySelector(".input-neery-prep");
+                if (prepNeery) prepNeery.addEventListener("input", e => { entry.neery_preparacion = e.target.value; saveDraft(); });
+
+                const lectNeery = slotCard.querySelector(".input-neery-lect");
+                if (lectNeery) lectNeery.addEventListener("input", e => { entry.neery_lectura = e.target.value; saveDraft(); });
+
+                const dialNeery = slotCard.querySelector(".input-neery-dial");
+                if (dialNeery) dialNeery.addEventListener("input", e => { entry.neery_dialogo = e.target.value.split('\n').filter(x=>x.trim()); saveDraft(); });
+
+                const cierreNeery = slotCard.querySelector(".input-neery-cierre");
+                if (cierreNeery) cierreNeery.addEventListener("input", e => { entry.neery_cierre = e.target.value; saveDraft(); });
+            }
 
             const btnTakePhoto = slotCard.querySelector(".btn-take-photo");
             const btnChooseGallery = slotCard.querySelector(".btn-choose-gallery");
@@ -435,15 +480,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     try {
                         const parsedJson = await callGeminiApiDirect(userKey, entry);
-                        entry.unidad = parsedJson.unidad || "";
-                        entry.tema = parsedJson.tema || "";
-                        entry.capacidad = parsedJson.capacidad || "";
-                        entry.indicadores = parsedJson.indicadores || [];
-                        entry.motivacion = parsedJson.motivacion || "";
-                        entry.desarrollo = parsedJson.desarrollo || "";
-                        entry.conclusion = parsedJson.conclusion || "";
-                        entry.fijacion = parsedJson.fijacion || "";
-                        entry.evaluacion = parsedJson.evaluacion || "";
+                        if (entry.is_neery) {
+                            entry.texto = parsedJson.texto || entry.texto || "";
+                            entry.tiempo = parsedJson.tiempo || entry.tiempo || "10 minutos";
+                            entry.neery_preparacion = parsedJson.neery_preparacion || "";
+                            entry.neery_lectura = parsedJson.neery_lectura || "";
+                            entry.neery_dialogo = parsedJson.neery_dialogo || [];
+                            entry.neery_cierre = parsedJson.neery_cierre || "";
+                        } else {
+                            entry.unidad = parsedJson.unidad || "";
+                            entry.tema = parsedJson.tema || "";
+                            entry.capacidad = parsedJson.capacidad || "";
+                            entry.indicadores = parsedJson.indicadores || [];
+                            entry.motivacion = parsedJson.motivacion || "";
+                            entry.desarrollo = parsedJson.desarrollo || "";
+                            entry.conclusion = parsedJson.conclusion || "";
+                            entry.fijacion = parsedJson.fijacion || "";
+                            entry.evaluacion = parsedJson.evaluacion || "";
+                        }
 
                         saveDraft();
                         renderSlots();
@@ -521,11 +575,31 @@ document.addEventListener("DOMContentLoaded", () => {
         if (entry.prompt_notes && entry.prompt_notes.trim()) {
             userText += `Instrucciones o notas adicionales de la docente: ${entry.prompt_notes.trim()}\n`;
         }
-        userText += "Extrae y redacta la planificación didáctica completa en JSON analizando la información de las fotos enviadas.";
 
-        parts.push({ text: userText });
+        let systemInstruction = "";
 
-        const systemInstruction = `Actúas exactamente como una docente titular de Educación Escolar Básica (EEB) de 4º Grado en Paraguay, licenciada en educación y con vasta experiencia en el diseño de planificaciones semanales según lineamientos del MEC.
+        if (entry.is_neery) {
+            userText += "Extrae el título de la lectura/cuento/poesía de las fotos enviadas o notas y redacta los 4 pasos completos del desarrollo de la Tertulia Literaria Dialógica según los personajes y la trama del texto.";
+            systemInstruction = `Actúas exactamente como una docente titular de EEB de 4º Grado en Paraguay.
+REGLAS PARA ESTRATEGIA ÑE'ẼRY (Tertulias Literarias Dialógicas):
+Analiza la foto enviada y genera la estructura didáctica completa:
+FORMATO JSON ESTRICTO:
+{
+  "texto": "Título exacto de la lectura o cuento entre comillas (ejemplo: 'Enrique y el reloj')",
+  "tiempo": "10 minutos",
+  "neery_preparacion": "Los estudiantes se sientan en un círculo o semicírculo en el Rincón de Lectura. Se recuerdan brevemente los acuerdos: pedir la palabra, escuchar con atención, respetar las opiniones de los demás y participar con confianza.",
+  "neery_lectura": "La docente realiza la lectura en voz alta del texto. Durante la lectura, los niños y niñas van pensando en la parte que más les llamó la atención o les hizo recordar alguna vivencia personal.",
+  "neery_dialogo": [
+    "Recontado e identificación de elementos: ¿Qué le pasó al personaje principal y cómo actuó?",
+    "Conexión con experiencias personales: ¿Alguna vez vivieron una situación similar a la del texto? ¿Cómo se sintieron?",
+    "Apoyo y solidaridad / Dilema moral: ¿Qué valores nos enseña la actitud de los personajes ante el conflicto?",
+    "Valoración y respeto: Se escucha atentamente a cada participante y se valoran sus intervenciones sin juzgar."
+  ],
+  "neery_cierre": "Se elabora una idea compartida entre todos relacionada a la enseñanza principal del cuento. Se felicita al grupo por su participación activa y por respetar los turnos de habla."
+}`;
+        } else {
+            userText += "Extrae y redacta la planificación didáctica completa en JSON analizando la información de las fotos enviadas.";
+            systemInstruction = `Actúas exactamente como una docente titular de Educación Escolar Básica (EEB) de 4º Grado en Paraguay, licenciada en educación y con vasta experiencia en el diseño de planificaciones semanales según lineamientos del MEC.
 REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 1. CONCISIÓN Y PRECISIÓN: No te extiendas demasiado en ningún punto. Redacta frases cortas, directas, concretas y puntuales.
 2. TONO Y LENGUAJE DOCENTE EEB (PARAGUAY): Utiliza la terminología pedagógica oficial del MEC de Paraguay (Capacidades concretas, Indicadores evaluables directos, ejercitarios en libro y cuaderno).
@@ -542,6 +616,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
   "fijacion": "Ejercitarios del libro o cuaderno (1 frase concisa)",
   "evaluacion": "Verificación del trabajo o revisión (1 frase concisa)"
 }`;
+        }
 
         const payload = {
             contents: [{ parts: parts }],
@@ -735,6 +810,17 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                     }
 
                     if (entry.is_neery) {
+                        const neeryText = entry.texto || "'Enrique y el reloj'";
+                        const neeryPrep = entry.neery_preparacion || "Los estudiantes se sientan en un círculo o semicírculo en el Rincón de Lectura. Se recuerdan brevemente los acuerdos: pedir la palabra, escuchar con atención, respetar las opiniones de los demás y participar con confianza.";
+                        const neeryLect = entry.neery_lectura || `La docente realiza la lectura en voz alta del texto ${neeryText}. Durante la lectura, los niños y niñas van pensando en la parte que más les llamó la atención o les hizo recordar alguna vivencia personal.`;
+                        const neeryDial = entry.neery_dialogo && entry.neery_dialogo.length > 0 ? entry.neery_dialogo : [
+                            "Recontado e identificación de elementos: ¿Qué le pasó al personaje principal y cómo actuó?",
+                            "Conexión con experiencias personales: ¿Alguna vez vivieron una situación similar a la del texto? ¿Cómo se sintieron?",
+                            "Apoyo y solidaridad: ¿Qué valores nos enseña la actitud de los personajes ante el conflicto?",
+                            "Valoración y respeto: Se escucha atentamente a cada participante y se valoran sus intervenciones sin juzgar."
+                        ];
+                        const neeryCierre = entry.neery_cierre || "Se elabora una idea compartida entre todos relacionada al texto leído. Se felicita al grupo por su participación activa y por respetar los turnos de habla.";
+
                         const neeryCardTable = new Table({
                             width: { size: 9890, type: WidthType.DXA },
                             columnWidths: [2967, 6923],
@@ -750,11 +836,11 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                                         children: [new Paragraph({ children: [new TextRun({ text: `📖 ${dayName.toUpperCase()}  |  ${timeSlot}  —  ÑE'ẼRY`, bold: true, size: 22, color: "FFFFFF" })] })]
                                     })]
                                 }),
-                                // Fields
+                                // Header rows
                                 ...[
                                     ["Área:", " Lengua Materna / Comunicación (Lectura, Escritura y Oralidad)"],
                                     ["Estrategia:", " Tertulias Literarias Dialógicas"],
-                                    ["Texto:", ` ${entry.texto || "'La vaca Nicolasa' (de Marisa Moreno)"}`],
+                                    ["Texto:", ` ${neeryText}`],
                                     ["Espacio:", " Rincón de Lectura"],
                                     ["Tiempo Estimado:", ` ${entry.tiempo || "10 minutos"}`]
                                 ].map(([lbl, val]) => new TableRow({
@@ -762,7 +848,24 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                                         new TableCell({ width: { size: 2967, type: WidthType.DXA }, shading: { fill: "F2F5F9" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: lbl, bold: true, size: 19, color: "1F4E78" })] })] }),
                                         new TableCell({ width: { size: 6923, type: WidthType.DXA }, shading: { fill: "FFFFFF" }, margins: { top: 60, bottom: 60, left: 100, right: 100 }, children: [new Paragraph({ children: [new TextRun({ text: val, size: 19 })] })] })
                                     ]
-                                }))
+                                })),
+                                // Row 6: Desarrollo de la Tertulia Literaria Dialógica (columnSpan: 2)
+                                new TableRow({
+                                    children: [new TableCell({
+                                        columnSpan: 2,
+                                        width: { size: 9890, type: WidthType.DXA },
+                                        shading: { fill: "FFFFFF" },
+                                        margins: { top: 120, bottom: 120, left: 150, right: 150 },
+                                        children: [
+                                            new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 100 }, children: [new TextRun({ text: "Desarrollo de la Tertulia Literaria Dialógica:", bold: true, size: 21, color: "1F4E78" })] }),
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "1. Preparación: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: neeryPrep, size: 19 })] }),
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "2. Lectura: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: neeryLect, size: 19 })] }),
+                                            new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "3. Diálogo e Intercambio: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: "El docente actúa como moderador/facilitador, dando la palabra y lanzando preguntas abiertas para la discusión:", size: 19 })] }),
+                                            ...neeryDial.map(q => new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: `   • ${q}`, size: 18 })] })),
+                                            new Paragraph({ spacing: { before: 60, after: 60 }, children: [new TextRun({ text: "4. Cierre: ", bold: true, size: 19, color: "1F4E78" }), new TextRun({ text: neeryCierre, size: 19 })] })
+                                        ]
+                                    })]
+                                })
                             ]
                         });
                         children.push(neeryCardTable);
