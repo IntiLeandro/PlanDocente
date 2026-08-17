@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (count < processable.length) {
-                await new Promise(r => setTimeout(r, 2000));
+                await new Promise(r => setTimeout(r, 2500));
             }
         }
 
@@ -593,11 +593,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Lista fija de modelos oficiales y 100% gratuitos de producción
-    async function fetchValidGeminiModels(apiKey) {
-        return ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
-    }
-
     async function callGeminiApiDirect(apiKey, entry) {
         const parts = [];
         const hasImages = entry.image_files && entry.image_files.length > 0;
@@ -678,7 +673,14 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        const modelsToTry = await fetchValidGeminiModels(apiKey);
+        // Lista estricta de modelos de producción estándar en orden de prioridad
+        const modelsToTry = [
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash-8b"
+        ];
+
         let lastError = "";
 
         for (const model of modelsToTry) {
@@ -694,7 +696,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 if (!resp.ok) {
                     const errDetail = data.error ? data.error.message : JSON.stringify(data);
                     lastError = `[HTTP ${resp.status}] ${errDetail}`;
-                    // Si un modelo falla con 429, 400 o límite 0, saltar al siguiente modelo de producción
+                    // Si falla cualquier modelo (404, 400, 429), pasa inmediatamente al siguiente sin cortar la ejecución
                     continue;
                 }
 
@@ -706,6 +708,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 return JSON.parse(textResp);
             } catch (e) {
                 lastError = e.message;
+                continue;
             }
         }
 
