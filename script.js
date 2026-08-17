@@ -593,6 +593,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Consulta los modelos dinámicamente habilitados para la Clave API de la docente
+    async function fetchValidGeminiModels(apiKey) {
+        const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) return ["gemini-1.5-flash", "gemini-1.5-flash-latest"];
+            const data = await resp.json();
+            const valid = [];
+            if (data.models && Array.isArray(data.models)) {
+                for (const m of data.models) {
+                    if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
+                        let name = m.name || "";
+                        if (name.startsWith("models/")) name = name.substring(7);
+                        // Ignorar modelos deshabilitados o con cuota 0 (gemini-3, thinking, interactions)
+                        if (!name.includes("thinking") && !name.includes("interactions") && !name.includes("preview") && !name.includes("image")) {
+                            valid.push(name);
+                        }
+                    }
+                }
+            }
+            // Colocar los modelos flash más rápidos arriba
+            const flashModels = valid.filter(m => m.includes("flash"));
+            const otherModels = valid.filter(m => !m.includes("flash"));
+            const combined = [...flashModels, ...otherModels];
+            return combined.length > 0 ? combined : ["gemini-1.5-flash", "gemini-1.5-flash-latest"];
+        } catch (e) {
+            return ["gemini-1.5-flash", "gemini-1.5-flash-latest"];
+        }
+    }
+
     async function callGeminiApiDirect(apiKey, entry) {
         const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
         const parts = [];
@@ -680,61 +711,66 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        // Probar los endpoints v1 y v1beta con gemini-1.5-flash y gemini-1.5-flash-latest
-        const targetEndpoints = [
-            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${cleanKey}`,
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cleanKey}`,
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanKey}`
-        ];
+        // Obtener la lista dinámica de modelos soportados por la Clave API de la docente
+        const discoveredModels = await fetchValidGeminiModels(cleanKey);
+        const modelsToTry = Array.from(new Set([...discoveredModels, "gemini-1.5-flash", "gemini-1.5-flash-latest"]));
 
         let lastError = "";
 
-        for (const url of targetEndpoints) {
-            for (let attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    const resp = await fetch(url, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
+        for (const model of modelsToTry) {
+            // Probar v1beta y v1 para cada modelo descubierto
+            const urls = [
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`,
+                `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${cleanKey}`
+            ];
 
-                    const data = await resp.json();
+            for (const url of urls) {
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        const resp = await fetch(url, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
 
-                    if (!resp.ok) {
-                        const errDetail = data.error ? data.error.message : JSON.stringify(data);
-                        lastError = `[HTTP ${resp.status}] ${errDetail}`;
+                        const data = await resp.json();
 
-                        // Si es 429 (límite por minuto), esperar 5 segundos y reintentar este endpoint
-                        if (resp.status === 429 && attempt < 3) {
-                            const loaderText = document.getElementById("loaderText");
-                            if (loaderText) loaderText.textContent = `Límite por minuto alcanzado. Reintentando en 5s con Gemini (Intento ${attempt}/3)...`;
-                            await new Promise(r => setTimeout(r, 5000));
-                            continue;
+                        if (!resp.ok) {
+                            const errDetail = data.error ? data.error.message : JSON.stringify(data);
+                            lastError = `[HTTP ${resp.status}] ${errDetail}`;
+
+                            // Si es 429 (límite por minuto), esperar 5 segundos y reintentar este endpoint
+                            if (resp.status === 429 && attempt < 3) {
+                                const loaderText = document.getElementById("loaderText");
+                                if (loaderText) loaderText.textContent = `Límite por minuto alcanzado. Reintentando en 5s con Gemini (Intento ${attempt}/3)...`;
+                                await new Promise(r => setTimeout(r, 5000));
+                                continue;
+                            }
+                            // Si es 404 o 400, romper e ir a la siguiente URL/Modelo
+                            break;
                         }
-                        // Si es 404, romper intento e ir al siguiente endpoint en la lista
+
+                        let textResp = "";
+                        if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                            textResp = data.candidates[0].content.parts[0].text || "";
+                        }
+
+                        textResp = textResp.trim();
+                        if (textResp.startsWith("```json")) textResp = textResp.substring(7);
+                        if (textResp.startsWith("```")) textResp = textResp.substring(3);
+                        if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
+                        textResp = textResp.trim();
+
+                        if (!textResp) {
+                            lastError = "Respuesta vacía del servidor.";
+                            break;
+                        }
+
+                        return JSON.parse(textResp);
+                    } catch (e) {
+                        lastError = e.message;
                         break;
                     }
-
-                    let textResp = "";
-                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
-                        textResp = data.candidates[0].content.parts[0].text || "";
-                    }
-
-                    textResp = textResp.trim();
-                    if (textResp.startsWith("```json")) textResp = textResp.substring(7);
-                    if (textResp.startsWith("```")) textResp = textResp.substring(3);
-                    if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
-                    textResp = textResp.trim();
-
-                    if (!textResp) {
-                        lastError = "Respuesta vacía del servidor.";
-                        break;
-                    }
-
-                    return JSON.parse(textResp);
-                } catch (e) {
-                    lastError = e.message;
-                    break;
                 }
             }
         }
