@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateStats();
     });
 
-    // Botón para generar TODAS las clases del día activo (Incluyendo lecciones con o sin fotos)
+    // Botón para generar TODAS las clases del día activo
     document.getElementById("btnGenAllDay").addEventListener("click", async () => {
         const userKey = apiKeyInput ? apiKeyInput.value.trim() : "";
         if (!userKey) {
@@ -612,7 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let userText = `Área curricular: ${entry.area}.\n`;
         if (entry.prompt_notes && entry.prompt_notes.trim()) {
-            userText += `Instrucciones o notas de la docente: ${entry.prompt_notes.trim()}\n`;
+            userText += `Instrucciones o temas indicados por la docente: ${entry.prompt_notes.trim()}\n`;
         }
 
         let systemInstruction = "";
@@ -667,48 +667,71 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
         const payload = {
             contents: [{ parts: parts }],
             systemInstruction: { parts: [{ text: systemInstruction }] },
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ],
             generationConfig: {
                 temperature: 0.2,
                 responseMimeType: "application/json"
             }
         };
 
-        // Lista estricta de modelos de producción estándar en orden de prioridad
-        const modelsToTry = [
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-flash-8b"
-        ];
+        // Modelos oficiales 100% estándar comprobados por la API pública de Google Gemini
+        const validModels = ["gemini-1.5-flash", "gemini-2.0-flash"];
 
         let lastError = "";
 
-        for (const model of modelsToTry) {
+        for (const model of validModels) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
-            try {
-                const resp = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+            
+            // Reintentar hasta 3 veces automáticamente si ocurre un límite temporal HTTP 429
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const resp = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
 
-                const data = await resp.json();
-                if (!resp.ok) {
-                    const errDetail = data.error ? data.error.message : JSON.stringify(data);
-                    lastError = `[HTTP ${resp.status}] ${errDetail}`;
-                    // Si falla cualquier modelo (404, 400, 429), pasa inmediatamente al siguiente sin cortar la ejecución
-                    continue;
+                    const data = await resp.json();
+
+                    if (!resp.ok) {
+                        const errDetail = data.error ? data.error.message : JSON.stringify(data);
+                        lastError = `[HTTP ${resp.status}] ${errDetail}`;
+                        
+                        // Si la API dice que alcanzaste el límite por minuto (HTTP 429), esperar 4 segundos y reintentar automáticamente
+                        if (resp.status === 429 && attempt < 3) {
+                            document.getElementById("loaderText").textContent = `Límite por minuto alcanzado. Reintentando automáticamente en 4 segundos (Intento ${attempt}/3)...`;
+                            await new Promise(r => setTimeout(r, 4000));
+                            continue;
+                        }
+                        break; // Si es otro error (ej: 404 o 400), probar con el siguiente modelo de validModels
+                    }
+
+                    let textResp = "";
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                        textResp = data.candidates[0].content.parts[0].text || "";
+                    }
+
+                    textResp = textResp.trim();
+                    if (textResp.startsWith("```json")) textResp = textResp.substring(7);
+                    if (textResp.startsWith("```")) textResp = textResp.substring(3);
+                    if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
+                    textResp = textResp.trim();
+
+                    if (!textResp) {
+                        lastError = "Respuesta vacía del servidor.";
+                        break;
+                    }
+
+                    return JSON.parse(textResp);
+                } catch (e) {
+                    lastError = e.message;
+                    break;
                 }
-
-                let textResp = data.candidates[0].content.parts[0].text.trim();
-                if (textResp.startsWith("```json")) textResp = textResp.substring(7);
-                if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
-                textResp = textResp.trim();
-
-                return JSON.parse(textResp);
-            } catch (e) {
-                lastError = e.message;
-                continue;
             }
         }
 
