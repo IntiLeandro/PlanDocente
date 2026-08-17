@@ -1,6 +1,6 @@
 # PlanDocente | Generador Inteligente de Planificaciones Semanales EEB
 
-Aplicación Web Progresiva (PWA) de generación automática de planificaciones semanales didácticas para docentes de **Educación Escolar Básica (EEB) de Paraguay**.
+Aplicación Web Progresiva (PWA) de generación automática de planificaciones semanales didácticas para docentes de **Educación Escolar Básica (EEB) de Paraguay** (4º Grado - Colegio Santa Carolina).
 
 ## 🌟 Características
 - **100% Client-Side:** No requiere servidor backend, funciona directamente en GitHub Pages.

@@ -92,12 +92,19 @@
         </details>
 
         <!-- Contenedor del Día Activo -->
-        <section class="card entries-card">
             <div class="card-header flex-between">
                 <h3 id="currentDayTitle">📌 Bloques Horarios de Lunes</h3>
-                <button type="button" class="btn-ai-day" id="btnGenAllDay">
-                    ✨ Generar todo el Día con IA
-                </button>
+                <div class="header-actions-group">
+                    <button type="button" class="btn-ai-day" id="btnGenAllDay">
+                        ✨ Generar todo el Día con IA
+                    </button>
+                    <button type="button" class="btn-clear-sec" id="btnClearDayText" title="Vaciar texto del día activo sin borrar clases">
+                        🧹 Limpiar Día
+                    </button>
+                    <button type="button" class="btn-clear-sec" id="btnClearAllText" title="Vaciar texto de toda la semana para iniciar una nueva semana">
+                        🗓️ Nueva Semana
+                    </button>
+                </div>
             </div>
             
             <div id="slotsContainer" class="slots-container">
@@ -147,6 +154,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=22"></script>
 </body>
 </html>

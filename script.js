@@ -99,6 +99,70 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Botones para Limpiar Texto sin borrar bloques de horarios
+    const btnClearDayText = document.getElementById("btnClearDayText");
+    if (btnClearDayText) {
+        btnClearDayText.addEventListener("click", () => {
+            if (confirm(`¿Deseas vaciar los textos redactados de ${activeDay}? Tus bloques de horarios y materias se mantendrán intactos.`)) {
+                (scheduleData[activeDay] || []).forEach(entry => {
+                    entry.unidad = "";
+                    entry.tema = "";
+                    entry.capacidad = "";
+                    entry.indicadores = [];
+                    entry.motivacion = "";
+                    entry.desarrollo = "";
+                    entry.conclusion = "";
+                    entry.fijacion = "";
+                    entry.evaluacion = "";
+                    entry.prompt_notes = "";
+                    entry.image_files = [];
+                    if (entry.is_neery) {
+                        entry.texto = "";
+                        entry.neery_preparacion = "";
+                        entry.neery_lectura = "";
+                        entry.neery_dialogo = [];
+                        entry.neery_cierre = "";
+                    }
+                });
+                saveDraft();
+                renderSlots();
+            }
+        });
+    }
+
+    const btnClearAllText = document.getElementById("btnClearAllText");
+    if (btnClearAllText) {
+        btnClearAllText.addEventListener("click", () => {
+            if (confirm("¿Deseas vaciar todos los textos redactados de los 5 días para iniciar la planificación de una NUEVA SEMANA? Se conservarán todas las materias y horarios intactos.")) {
+                Object.values(scheduleData).forEach(arr => {
+                    arr.forEach(entry => {
+                        entry.unidad = "";
+                        entry.tema = "";
+                        entry.capacidad = "";
+                        entry.indicadores = [];
+                        entry.motivacion = "";
+                        entry.desarrollo = "";
+                        entry.conclusion = "";
+                        entry.fijacion = "";
+                        entry.evaluacion = "";
+                        entry.prompt_notes = "";
+                        entry.image_files = [];
+                        if (entry.is_neery) {
+                            entry.texto = "";
+                            entry.neery_preparacion = "";
+                            entry.neery_lectura = "";
+                            entry.neery_dialogo = [];
+                            entry.neery_cierre = "";
+                        }
+                    });
+                });
+                saveDraft();
+                renderSlots();
+                alert("¡Campos vaciados con éxito! Listo para redactar la nueva semana. 🚀");
+            }
+        });
+    }
+
     const tabBtns = document.querySelectorAll(".tab-btn");
     const currentDayTitle = document.getElementById("currentDayTitle");
     const slotsContainer = document.getElementById("slotsContainer");
@@ -531,10 +595,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Consulta dinámicamente los modelos válidos disponibles para la clave ingresada
     async function fetchValidGeminiModels(apiKey) {
+        // Lista prioritario de modelos estándar de producción
+        const preferredModels = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b"];
         const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
         try {
             const resp = await fetch(url);
-            if (!resp.ok) return ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"];
+            if (!resp.ok) return preferredModels;
             const data = await resp.json();
             const validModels = [];
             if (data.models && Array.isArray(data.models)) {
@@ -542,16 +608,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
                         let name = m.name || "";
                         if (name.startsWith("models/")) name = name.substring(7);
-                        validModels.push(name);
+                        // Filtrar modelos experimentales o de solo Interacciones que causan HTTP 400
+                        if (!name.includes("thinking") && !name.includes("exp") && !name.includes("preview")) {
+                            validModels.push(name);
+                        }
                     }
                 }
             }
             const flashModels = validModels.filter(m => m.includes("flash"));
             const otherModels = validModels.filter(m => !m.includes("flash"));
-            const combined = [...flashModels, ...otherModels];
-            return combined.length > 0 ? combined : ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"];
+            const combined = [...preferredModels, ...flashModels, ...otherModels];
+            const uniqueModels = Array.from(new Set(combined));
+            return uniqueModels.length > 0 ? uniqueModels : preferredModels;
         } catch (e) {
-            return ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.0-flash"];
+            return preferredModels;
         }
     }
 
@@ -643,6 +713,10 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 if (!resp.ok) {
                     const errDetail = data.error ? data.error.message : JSON.stringify(data);
                     lastError = `[HTTP ${resp.status}] ${errDetail}`;
+                    // Ignorar modelos que devuelvan error de Interactions API o incompatibles y saltar al siguiente modelo estándar
+                    if (errDetail.includes("Interactions API") || resp.status === 400) {
+                        continue;
+                    }
                     continue;
                 }
 

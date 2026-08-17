@@ -421,6 +421,34 @@ input[type="text"], textarea, select {
     background: rgba(47, 85, 151, 0.1);
 }
 
+.header-actions-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-clear-sec {
+    background: rgba(239, 68, 68, 0.15);
+    color: #FCA5A5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-fast);
+}
+
+.btn-clear-sec:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #FFFFFF;
+    border-color: #EF4444;
+}
+
 .upload-actions {
     display: flex;
     gap: 10px;
