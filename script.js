@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateStats();
     });
 
-    // Botón para generar TODAS las clases del día activo (Incluyendo Ñe'ẽry)
+    // Botón para generar TODAS las clases del día activo (Incluyendo lecciones con o sin fotos)
     document.getElementById("btnGenAllDay").addEventListener("click", async () => {
         const userKey = apiKeyInput ? apiKeyInput.value.trim() : "";
         if (!userKey) {
@@ -319,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="slot-fields">
                         <div class="form-group full">
                             <label>Indicaciones o Temas (Opcional):</label>
-                            <input type="text" class="input-notes" value="${entry.prompt_notes || ''}" placeholder="Dejar vacío o escribir aclaración opcional...">
+                            <input type="text" class="input-notes" value="${entry.prompt_notes || ''}" placeholder="Escribir tema o indicación sin fotos (ej: 'Herramientas de trabajo, pág 45')...">
                         </div>
                         
                         ${!entry.is_special && !entry.is_neery ? `
@@ -593,42 +593,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Modelos de producción gratuitos y ultra-estables de Google
+    // Lista fija de modelos oficiales y 100% gratuitos de producción
     async function fetchValidGeminiModels(apiKey) {
-        // Lista prioritario de modelos estándar de producción
-        const preferredModels = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
-        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) return preferredModels;
-            const data = await resp.json();
-            const validModels = [];
-            if (data.models && Array.isArray(data.models)) {
-                for (const m of data.models) {
-                    if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
-                        let name = m.name || "";
-                        if (name.startsWith("models/")) name = name.substring(7);
-                        // Excluir modelos experimentales o de cuota 0 (gemini-3-pro-image, thinking, exp, preview)
-                        if (!name.includes("thinking") && !name.includes("exp") && !name.includes("preview") && !name.includes("image") && !name.includes("imagen")) {
-                            validModels.push(name);
-                        }
-                    }
-                }
-            }
-            const flashModels = validModels.filter(m => m.includes("flash"));
-            const otherModels = validModels.filter(m => !m.includes("flash"));
-            const combined = [...preferredModels, ...flashModels, ...otherModels];
-            const uniqueModels = Array.from(new Set(combined));
-            return uniqueModels.length > 0 ? uniqueModels : preferredModels;
-        } catch (e) {
-            return preferredModels;
-        }
+        return ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
     }
 
     async function callGeminiApiDirect(apiKey, entry) {
         const parts = [];
+        const hasImages = entry.image_files && entry.image_files.length > 0;
         
-        if (entry.image_files && entry.image_files.length) {
+        if (hasImages) {
             for (const file of entry.image_files) {
                 const b64 = await fileToBase64(file);
                 const mimeType = file.type || "image/jpeg";
@@ -643,16 +617,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let userText = `Área curricular: ${entry.area}.\n`;
         if (entry.prompt_notes && entry.prompt_notes.trim()) {
-            userText += `Instrucciones o notas adicionales de la docente: ${entry.prompt_notes.trim()}\n`;
+            userText += `Instrucciones o notas de la docente: ${entry.prompt_notes.trim()}\n`;
         }
 
         let systemInstruction = "";
 
         if (entry.is_neery) {
-            userText += "Extrae el título de la lectura/cuento/poesía de las fotos enviadas o notas y redacta los 4 pasos completos del desarrollo de la Tertulia Literaria Dialógica según los personajes y la trama del texto.";
+            userText += hasImages ? 
+                "Extrae el título de la lectura de las fotos enviadas o notas y redacta los 4 pasos de la Tertulia Literaria Dialógica." :
+                "Redacta los 4 pasos completos de la Tertulia Literaria Dialógica basándote en las indicaciones/cuento provisto.";
+            
             systemInstruction = `Actúas exactamente como una docente titular de EEB de 4º Grado en Paraguay.
 REGLAS PARA ESTRATEGIA ÑE'ẼRY (Tertulias Literarias Dialógicas):
-Analiza la foto enviada y genera la estructura didáctica completa:
 FORMATO JSON ESTRICTO:
 {
   "texto": "Título exacto de la lectura o cuento entre comillas (ejemplo: 'Enrique y el reloj')",
@@ -668,7 +644,10 @@ FORMATO JSON ESTRICTO:
   "neery_cierre": "Se elabora una idea compartida entre todos relacionada a la enseñanza principal del cuento. Se felicita al grupo por su participación activa y por respetar los turnos de habla."
 }`;
         } else {
-            userText += "Extrae y redacta la planificación didáctica completa en JSON analizando la información de las fotos enviadas.";
+            userText += hasImages ?
+                "Extrae y redacta la planificación didáctica completa en JSON analizando la información de las fotos enviadas." :
+                "Redacta la planificación didáctica completa en JSON basándote en el área curricular y en el tema o indicaciones de la docente.";
+            
             systemInstruction = `Actúas exactamente como una docente titular de Educación Escolar Básica (EEB) de 4º Grado en Paraguay, licenciada en educación y con vasta experiencia en el diseño de planificaciones semanales según lineamientos del MEC.
 REGLAS CRÍTICAS DE ESTILO Y FORMATO:
 1. CONCISIÓN Y PRECISIÓN: No te extiendas demasiado en ningún punto. Redacta frases cortas, directas, concretas y puntuales.
@@ -687,6 +666,8 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
   "evaluacion": "Verificación del trabajo o revisión (1 frase concisa)"
 }`;
         }
+
+        parts.push({ text: userText });
 
         const payload = {
             contents: [{ parts: parts }],
@@ -713,10 +694,7 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 if (!resp.ok) {
                     const errDetail = data.error ? data.error.message : JSON.stringify(data);
                     lastError = `[HTTP ${resp.status}] ${errDetail}`;
-                    // Ignorar modelos con cuota 0 o de Interacciones y saltar automáticamente al siguiente modelo de la lista
-                    if (resp.status === 429 || resp.status === 400 || errDetail.includes("Interactions API") || errDetail.includes("limit: 0")) {
-                        continue;
-                    }
+                    // Si un modelo falla con 429, 400 o límite 0, saltar al siguiente modelo de producción
                     continue;
                 }
 
