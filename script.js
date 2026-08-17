@@ -594,6 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function callGeminiApiDirect(apiKey, entry) {
+        const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
         const parts = [];
         const hasImages = entry.image_files && entry.image_files.length > 0;
         
@@ -679,58 +680,62 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
             }
         };
 
-        // Modelo oficial único universalmente soportado en la API pública de Google Gemini para generateContent
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+        // Probar los endpoints v1 y v1beta con gemini-1.5-flash y gemini-1.5-flash-latest
+        const targetEndpoints = [
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${cleanKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cleanKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanKey}`
+        ];
+
         let lastError = "";
 
-        // Reintentar hasta 4 veces automáticamente con gemini-1.5-flash si ocurre límite de velocidad por minuto
-        for (let attempt = 1; attempt <= 4; attempt++) {
-            try {
-                const resp = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+        for (const url of targetEndpoints) {
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const resp = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
 
-                const data = await resp.json();
+                    const data = await resp.json();
 
-                if (!resp.ok) {
-                    const errDetail = data.error ? data.error.message : JSON.stringify(data);
-                    lastError = `[HTTP ${resp.status}] ${errDetail}`;
+                    if (!resp.ok) {
+                        const errDetail = data.error ? data.error.message : JSON.stringify(data);
+                        lastError = `[HTTP ${resp.status}] ${errDetail}`;
 
-                    // Si es rate limit (429), esperar 5 segundos y reintentar automáticamente
-                    if (resp.status === 429 && attempt < 4) {
-                        const loaderText = document.getElementById("loaderText");
-                        if (loaderText) loaderText.textContent = `Límite por minuto alcanzado. Reintentando en 5s con Gemini (Intento ${attempt}/4)...`;
-                        await new Promise(r => setTimeout(r, 5000));
-                        continue;
+                        // Si es 429 (límite por minuto), esperar 5 segundos y reintentar este endpoint
+                        if (resp.status === 429 && attempt < 3) {
+                            const loaderText = document.getElementById("loaderText");
+                            if (loaderText) loaderText.textContent = `Límite por minuto alcanzado. Reintentando en 5s con Gemini (Intento ${attempt}/3)...`;
+                            await new Promise(r => setTimeout(r, 5000));
+                            continue;
+                        }
+                        // Si es 404, romper intento e ir al siguiente endpoint en la lista
+                        break;
                     }
-                    throw new Error(lastError);
-                }
 
-                let textResp = "";
-                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
-                    textResp = data.candidates[0].content.parts[0].text || "";
-                }
+                    let textResp = "";
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                        textResp = data.candidates[0].content.parts[0].text || "";
+                    }
 
-                textResp = textResp.trim();
-                if (textResp.startsWith("```json")) textResp = textResp.substring(7);
-                if (textResp.startsWith("```")) textResp = textResp.substring(3);
-                if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
-                textResp = textResp.trim();
+                    textResp = textResp.trim();
+                    if (textResp.startsWith("```json")) textResp = textResp.substring(7);
+                    if (textResp.startsWith("```")) textResp = textResp.substring(3);
+                    if (textResp.endsWith("```")) textResp = textResp.substring(0, textResp.length - 3);
+                    textResp = textResp.trim();
 
-                if (!textResp) {
-                    throw new Error("Respuesta vacía del servidor.");
-                }
+                    if (!textResp) {
+                        lastError = "Respuesta vacía del servidor.";
+                        break;
+                    }
 
-                return JSON.parse(textResp);
-            } catch (e) {
-                lastError = e.message;
-                if (attempt < 4 && lastError.includes("429")) {
-                    await new Promise(r => setTimeout(r, 4000));
-                    continue;
+                    return JSON.parse(textResp);
+                } catch (e) {
+                    lastError = e.message;
+                    break;
                 }
-                break;
             }
         }
 
