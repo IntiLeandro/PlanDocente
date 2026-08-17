@@ -593,10 +593,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Consulta dinámicamente los modelos válidos disponibles para la clave ingresada
+    // Modelos de producción gratuitos y ultra-estables de Google
     async function fetchValidGeminiModels(apiKey) {
         // Lista prioritario de modelos estándar de producción
-        const preferredModels = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b"];
+        const preferredModels = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
         const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`;
         try {
             const resp = await fetch(url);
@@ -608,8 +608,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")) {
                         let name = m.name || "";
                         if (name.startsWith("models/")) name = name.substring(7);
-                        // Filtrar modelos experimentales o de solo Interacciones que causan HTTP 400
-                        if (!name.includes("thinking") && !name.includes("exp") && !name.includes("preview")) {
+                        // Excluir modelos experimentales o de cuota 0 (gemini-3-pro-image, thinking, exp, preview)
+                        if (!name.includes("thinking") && !name.includes("exp") && !name.includes("preview") && !name.includes("image") && !name.includes("imagen")) {
                             validModels.push(name);
                         }
                     }
@@ -713,8 +713,8 @@ REGLAS CRÍTICAS DE ESTILO Y FORMATO:
                 if (!resp.ok) {
                     const errDetail = data.error ? data.error.message : JSON.stringify(data);
                     lastError = `[HTTP ${resp.status}] ${errDetail}`;
-                    // Ignorar modelos que devuelvan error de Interactions API o incompatibles y saltar al siguiente modelo estándar
-                    if (errDetail.includes("Interactions API") || resp.status === 400) {
+                    // Ignorar modelos con cuota 0 o de Interacciones y saltar automáticamente al siguiente modelo de la lista
+                    if (resp.status === 429 || resp.status === 400 || errDetail.includes("Interactions API") || errDetail.includes("limit: 0")) {
                         continue;
                     }
                     continue;
